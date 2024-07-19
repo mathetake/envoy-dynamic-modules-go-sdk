@@ -30,7 +30,15 @@ jobs:
       - run: make check
 
   test:
-    name: Build and Test
+    name: Build and Test (envoy:${{ matrix.envoyx_image_tag }})
+    strategy:
+      fail-fast: false
+      matrix:
+        envoyx_image_tag:
+        - v1.30-latest-envoyx-v0.1.0
+        - v1.29-latest-envoyx-v0.1.0
+        - v1.30-latest-envoyx-main
+        - v1.29-latest-envoyx-main
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -46,5 +54,16 @@ jobs:
             ~/go/pkg/mod
             ~/go/bin
           key: build-and-test-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum', 'Makefile') }}
-      - run: make build
-      - run: make test
+      - name: Build
+        run: make build
+      - name: Unit tests
+        run: make test
+      - name: Install Envoy
+        run: |
+          export ENVOY_BIN_DIR=$HOME/envoy/bin
+          mkdir -p $ENVOY_BIN_DIR
+          docker run -v $ENVOY_BIN_DIR:/work/go-sdk -w /work/go-sdk \
+            --entrypoint /bin/cp ghcr.io/envoyproxyx/envoy:${{ matrix.envoyx_image_tag }} /usr/local/bin/envoy .
+          echo $ENVOY_BIN_DIR >> $GITHUB_PATH
+      - name: Integration E2E tests
+        run: make e2e
