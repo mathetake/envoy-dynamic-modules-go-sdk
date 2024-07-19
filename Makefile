@@ -15,6 +15,10 @@ test:
 	| xargs -I {} bash -c 'dirname {}' \
 	| xargs -I {} bash -c 'cd {} && go test ./...'
 
+.PHONY: e2e
+e2e:
+	@go test -v ./e2e/... -count=1
+
 .PHONY: lint
 lint:
 	@find . -name "go.mod" \
