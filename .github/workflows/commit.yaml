@@ -14,7 +14,7 @@ jobs:
     name: Code style check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           cache: false
@@ -37,11 +37,12 @@ jobs:
         envoyx_image_tag:
         - v1.30-latest-envoyx-v0.1.0
         - v1.29-latest-envoyx-v0.1.0
+        - v1.31-latest-envoyx-main
         - v1.30-latest-envoyx-main
         - v1.29-latest-envoyx-main
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           cache: false
