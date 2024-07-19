@@ -34,9 +34,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        envoy-image:
-        - ghcr.io/envoyproxyx/envoy:v1.30-latest-envoyx-v0.1.0
-        - ghcr.io/envoyproxyx/envoy:v1.29-latest-envoyx-v0.1.0
+        envoyx-image:
+        - v1.30-latest-envoyx-v0.1.0
+        - v1.29-latest-envoyx-v0.1.0
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -61,7 +61,7 @@ jobs:
           export ENVOY_BIN_DIR=$HOME/envoy/bin
           mkdir -p $ENVOY_BIN_DIR
           docker run -v $ENVOY_BIN_DIR:/work/go-sdk -w /work/go-sdk \
-            --entrypoint /bin/cp ${{ matrix.envoy-image }} /usr/local/bin/envoy .
+            --entrypoint /bin/cp ghcr.io/envoyproxyx/envoy:${{ matrix.envoy-image }} /usr/local/bin/envoy .
           echo $ENVOY_BIN_DIR >> $GITHUB_PATH
       - name: Integration E2E tests
         run: make e2e
