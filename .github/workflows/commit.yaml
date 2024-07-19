@@ -30,13 +30,15 @@ jobs:
       - run: make check
 
   test:
-    name: Build and Test ${{ matrix.envoyx_image_tag }}
+    name: Build and Test (envoy:${{ matrix.envoyx_image_tag }})
     strategy:
       fail-fast: false
       matrix:
         envoyx_image_tag:
         - v1.30-latest-envoyx-v0.1.0
         - v1.29-latest-envoyx-v0.1.0
+        - v1.30-latest-envoyx-main
+        - v1.29-latest-envoyx-main
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
