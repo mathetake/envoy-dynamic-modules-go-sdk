@@ -16,10 +16,14 @@ type EnvoyFilter struct {
 }
 
 // ContinueRequest is a function that continues the request processing.
-func (e EnvoyFilter) ContinueRequest() {}
+func (e EnvoyFilter) ContinueRequest() {
+	__envoy_dynamic_module_v1_http_continue_request(e.Raw)
+}
 
 // ContinueResponse is a function that continues the response processing.
-func (e EnvoyFilter) ContinueResponse() {}
+func (e EnvoyFilter) ContinueResponse() {
+	__envoy_dynamic_module_v1_http_continue_response(e.Raw)
+}
 
 // RequestHeaders is an opaque object that represents the underlying Envoy Http request headers map.
 // This is used to interact with it from the module code.
