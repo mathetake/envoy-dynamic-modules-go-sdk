@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,7 +36,7 @@ func TestHelloWorld(t *testing.T) {
 
 	// Check if the log contains the expected output.
 	requireEventuallyContainsMessages(t, stdOut,
-		// "NewModuleContext called",
+		"NewModuleContext called",
 		"this is configuration passed from envoy.yaml",
 		"HttpContextInit called",
 		"EventHttpRequestHeaders called",
@@ -70,10 +69,8 @@ func startEnvoy(t *testing.T) (stdOut, stdErr *bytes.Buffer, stop func()) {
 
 func requireEventuallyContainsMessages(t *testing.T, buf *bytes.Buffer, messages ...string) {
 	for _, msg := range messages {
-		if !assert.Eventually(t, func() bool {
+		require.Eventually(t, func() bool {
 			return strings.Contains(buf.String(), msg)
-		}, 3*time.Second, 100*time.Millisecond, "Expected message not found in buffer") {
-			t.Fatalf("Expected message not found in buffer: %s\n:%s", msg, buf.String())
-		}
+		}, 3*time.Second, 100*time.Millisecond, "Expected message \"%s\" not found in buffer\n%s", msg, buf.String())
 	}
 }
