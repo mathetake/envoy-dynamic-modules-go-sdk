@@ -35,7 +35,7 @@ func __envoy_dynamic_module_v1_event_http_context_init(
 	envoyFilterPtr __envoy_dynamic_module_v1_type_EnvoyFilterPtr,
 	moduleCtx __envoy_dynamic_module_v1_type_ModuleContextPtr,
 ) __envoy_dynamic_module_v1_type_HttpContextPtr {
-	envoyPtr := EnvoyFilterPtr{Raw: envoyFilterPtr}
+	envoyPtr := EnvoyFilter{Raw: envoyFilterPtr}
 	m := *(*ModuleContext)(unsafe.Pointer(moduleCtx)) //nolint:govet
 	httpCtx := m.HttpContextInit(envoyPtr)
 	pined := memManager.pinHttpContext(httpCtx)
@@ -51,9 +51,9 @@ func __envoy_dynamic_module_v1_event_http_request_headers(
 	requestHeadersPtr __envoy_dynamic_module_v1_type_HttpRequestHeadersMapPtr,
 	endOfStream __envoy_dynamic_module_v1_type_EndOfStream,
 ) __envoy_dynamic_module_v1_type_EventHttpRequestHeadersStatus {
-	envoyPtr := EnvoyFilterPtr{Raw: envoyFilterPtr}
+	envoyPtr := EnvoyFilter{Raw: envoyFilterPtr}
 	httpCtx := unwrapRawPinHttpContext(uintptr(httpContextPtr))
-	mapPtr := RequestHeadersMapPtr{Raw: requestHeadersPtr}
+	mapPtr := RequestHeaders{Raw: requestHeadersPtr}
 	end := endOfStream != 0
 	result := httpCtx.EventHttpRequestHeaders(envoyPtr, mapPtr, end)
 	return __envoy_dynamic_module_v1_type_EventHttpRequestHeadersStatus(result)
@@ -67,9 +67,9 @@ func __envoy_dynamic_module_v1_event_http_request_body(
 	httpContextPtr __envoy_dynamic_module_v1_type_HttpContextPtr,
 	buffer __envoy_dynamic_module_v1_type_HttpRequestBodyBufferPtr,
 	endOfStream __envoy_dynamic_module_v1_type_EndOfStream) __envoy_dynamic_module_v1_type_EventHttpRequestBodyStatus {
-	envoyPtr := EnvoyFilterPtr{Raw: envoyFilterPtr}
+	envoyPtr := EnvoyFilter{Raw: envoyFilterPtr}
 	httpCtx := unwrapRawPinHttpContext(uintptr(httpContextPtr))
-	buf := RequestBodyBufferPtr{Raw: buffer}
+	buf := RequestBodyBuffer{Raw: buffer}
 	end := endOfStream != 0
 	result := httpCtx.EventHttpRequestBody(envoyPtr, buf, end)
 	return __envoy_dynamic_module_v1_type_EventHttpRequestBodyStatus(result)
@@ -84,9 +84,9 @@ func __envoy_dynamic_module_v1_event_http_response_headers(
 	httpContextPtr __envoy_dynamic_module_v1_type_HttpContextPtr,
 	responseHeadersMapPtr __envoy_dynamic_module_v1_type_HttpResponseHeaderMapPtr,
 	endOfStream __envoy_dynamic_module_v1_type_EndOfStream) __envoy_dynamic_module_v1_type_EventHttpResponseHeadersStatus {
-	envoyPtr := EnvoyFilterPtr{Raw: envoyFilterPtr}
+	envoyPtr := EnvoyFilter{Raw: envoyFilterPtr}
 	httpCtx := unwrapRawPinHttpContext(uintptr(httpContextPtr))
-	mapPtr := ResponseHeadersMapPtr{Raw: responseHeadersMapPtr}
+	mapPtr := ResponseHeaders{Raw: responseHeadersMapPtr}
 	end := endOfStream != 0
 	result := httpCtx.EventHttpResponseHeaders(envoyPtr, mapPtr, end)
 	return __envoy_dynamic_module_v1_type_EventHttpResponseHeadersStatus(result)
@@ -100,9 +100,9 @@ func __envoy_dynamic_module_v1_event_http_response_body(
 	httpContextPtr __envoy_dynamic_module_v1_type_HttpContextPtr,
 	buffer __envoy_dynamic_module_v1_type_HttpResponseBodyBufferPtr,
 	endOfStream __envoy_dynamic_module_v1_type_EndOfStream) __envoy_dynamic_module_v1_type_EventHttpResponseBodyStatus {
-	envoyPtr := EnvoyFilterPtr{Raw: envoyFilterPtr}
+	envoyPtr := EnvoyFilter{Raw: envoyFilterPtr}
 	httpCtx := unwrapRawPinHttpContext(uintptr(httpContextPtr))
-	buf := ResponseBodyBufferPtr{Raw: buffer}
+	buf := ResponseBodyBuffer{Raw: buffer}
 	end := endOfStream != 0
 	result := httpCtx.EventHttpResponseBody(envoyPtr, buf, end)
 	return __envoy_dynamic_module_v1_type_EventHttpResponseBodyStatus(result)
@@ -114,7 +114,7 @@ func __envoy_dynamic_module_v1_event_http_response_body(
 func __envoy_dynamic_module_v1_event_http_destroy(
 	envoyFilterPtr __envoy_dynamic_module_v1_type_EnvoyFilterPtr,
 	httpContextPtr __envoy_dynamic_module_v1_type_HttpContextPtr) {
-	envoyPtr := EnvoyFilterPtr{Raw: envoyFilterPtr}
+	envoyPtr := EnvoyFilter{Raw: envoyFilterPtr}
 	httpCtx := unwrapRawPinHttpContext(uintptr(httpContextPtr))
 	httpCtx.EventHttpDestroy(envoyPtr)
 	memManager.removeHttpContext((*pinedHttpContext)(unsafe.Pointer(httpContextPtr)))
