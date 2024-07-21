@@ -49,14 +49,16 @@ func TestHelloWorld(t *testing.T) {
 
 func startEnvoy(t *testing.T) (stdOut, stdErr *bytes.Buffer, stop func()) {
 	// Check if `envoy` is installed.
-	if _, err := exec.LookPath("envoy"); err != nil {
-		t.Fatal("envoy binary not found. Please install it from containers at https://github.com/envoyproxyx/envoyx/pkgs/container/envoy")
-	}
+	_, err := exec.LookPath("envoy")
+	require.NoError(t, err, "envoy binary not found. Please install it from containers at https://github.com/envoyproxyx/envoyx/pkgs/container/envoy")
 
 	// Check if a binary named main exists.
-	if _, err := os.Stat("./main"); err != nil {
-		t.Fatal("envoy.yaml not found. Please create it.")
-	}
+	_, err = os.Stat("./main")
+	require.NoError(t, err, "./main not found. Please build it.")
+
+	// Check if envoy.yaml exists.
+	_, err = os.Stat("./envoy.yaml")
+	require.NoError(t, err, "./envoy.yaml not found. Please create it.")
 
 	cmd := exec.Command("envoy", "--concurrency", "1", "-c", "./envoy.yaml")
 	stdOut, stdErr = new(bytes.Buffer), new(bytes.Buffer)
