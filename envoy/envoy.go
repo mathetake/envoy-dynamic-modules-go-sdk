@@ -11,39 +11,28 @@ var NewModuleContext func(config string) ModuleContext
 
 // EnvoyFilter is an opaque object that represents the underlying Envoy Http filter instance.
 // This is used to interact with it from the module code.
-type EnvoyFilter struct {
-	Raw __envoy_dynamic_module_v1_type_EnvoyFilterPtr
+type EnvoyFilter interface {
+	// ContinueRequest is a function that continues the request processing.
+	ContinueRequest()
+	// ContinueResponse is a function that continues the response processing.
+	ContinueResponse()
 }
-
-// ContinueRequest is a function that continues the request processing.
-func (e EnvoyFilter) ContinueRequest() {}
-
-// ContinueResponse is a function that continues the response processing.
-func (e EnvoyFilter) ContinueResponse() {}
 
 // RequestHeaders is an opaque object that represents the underlying Envoy Http request headers map.
 // This is used to interact with it from the module code.
-type RequestHeaders struct {
-	Raw __envoy_dynamic_module_v1_type_HttpRequestHeadersMapPtr
-}
+type RequestHeaders interface{}
 
 // ResponseHeadersMap is an opaque object that represents the underlying Envoy Http response headers map.
 // This is used to interact with it from the module code.
-type ResponseHeaders struct {
-	Raw __envoy_dynamic_module_v1_type_HttpResponseHeaderMapPtr
-}
+type ResponseHeaders interface{}
 
 // RequestBodyBuffer is an opaque object that represents the underlying Envoy Http request body buffer.
 // This is used to interact with it from the module code.
-type RequestBodyBuffer struct {
-	Raw __envoy_dynamic_module_v1_type_HttpRequestBodyBufferPtr
-}
+type RequestBodyBuffer interface{}
 
 // ResponseBodyBuffer is an opaque object that represents the underlying Envoy Http response body buffer.
 // This is used to interact with it from the module code.
-type ResponseBodyBuffer struct {
-	Raw __envoy_dynamic_module_v1_type_HttpResponseBodyBufferPtr
-}
+type ResponseBodyBuffer interface{}
 
 // ModuleContext is an interface that represents the module context.
 // It is used to create HttpContext objects that correspond to each Http request.
