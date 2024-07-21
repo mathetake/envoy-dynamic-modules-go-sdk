@@ -6,14 +6,14 @@ build:
 	@go build ./...
 	@find ./examples -mindepth 1 -type f -name "main.go" \
 	| xargs -I {} bash -c 'dirname {}' \
-	| xargs -I {} bash -c 'cd {} && echo "building {}" && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -buildmode=c-shared -o main ./main.go'
+	| xargs -I {} bash -c 'cd {} && echo "building {}" && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -tags envoyshared -buildmode=c-shared -o main ./main.go'
 
 .PHONY: test
 test:
 	@go test $(shell go list ./... | grep -v e2e)
 	@find ./examples -mindepth 1 -type f -name "main.go" \
 	| xargs -I {} bash -c 'dirname {}' \
-	| xargs -I {} bash -c 'cd {} && go test ./...'
+	| xargs -I {} bash -c 'cd {} &&  CGO_ENABLED=0 go test ./...'
 
 .PHONY: lint
 lint:

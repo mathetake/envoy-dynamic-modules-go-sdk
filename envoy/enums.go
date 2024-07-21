@@ -1,6 +1,6 @@
 package envoy
 
-// This file corresponds to the enums defined in https://github.com/envoyproxyx/abi/blob/main/abi.h.
+// This file corresponds to the enums defined in abi.h.
 
 // EventHttpRequestHeadersStatus is the return value of the HttpContext.EventHttpRequestHeaders event.
 type EventHttpRequestHeadersStatus int
