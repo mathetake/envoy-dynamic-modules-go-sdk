@@ -5,8 +5,8 @@ This is the Go SDK for the EnvoyX modules. The modules are shared libraries that
 The shared library must be compiled with the same environment as EnvoyX, that means the programs must be compiled
 on amd64 Linux with the same version of glibc as the EnvoyX proxy.
 
-Only one Go-based shared library can exist in a process due to [the limitation of the Go runtime](https://github.com/golang/go/issues/65050),
-This SDK facilitates the creation of Go-based shared libraries that can be loaded at multiple HTTP filter chain
+Since only one Go-based shared library can exist in a process due to [the limitation of the Go runtime](https://github.com/golang/go/issues/65050),
+this SDK facilitates the creation of Go-based shared libraries that can be loaded at multiple HTTP filter chain
 in Envoy configuration. See the [example](./example) for more details.
 
 ## On an amd64 Linux machine
