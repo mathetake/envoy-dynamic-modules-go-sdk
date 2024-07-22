@@ -29,8 +29,9 @@ type (
 	}
 	// pinnedHttpContext holds a pinned HttpContext managed by the memory manager.
 	pinedHttpContext struct {
-		ctx        HttpContext
-		next, prev *pinedHttpContext
+		ctx         HttpContext
+		next, prev  *pinedHttpContext
+		envoyFilter EnvoyFilter
 	}
 )
 
@@ -67,6 +68,6 @@ func (m *memoryManager) removeHttpContext(ctx *pinedHttpContext) {
 	}
 }
 
-func unwrapRawPinHttpContext(rawPingedHttpContext uintptr) HttpContext {
-	return (*pinedHttpContext)(unsafe.Pointer(rawPingedHttpContext)).ctx
+func unwrapRawPinHttpContext(rawPingedHttpContext uintptr) *pinedHttpContext {
+	return (*pinedHttpContext)(unsafe.Pointer(rawPingedHttpContext))
 }

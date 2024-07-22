@@ -16,6 +16,8 @@ type EnvoyFilter interface {
 	ContinueRequest()
 	// ContinueResponse is a function that continues the response processing.
 	ContinueResponse()
+	// Destroyed returns true if the stream is destroyed.
+	Destroyed() bool
 }
 
 // RequestHeaders is an opaque object that represents the underlying Envoy Http request headers map.
@@ -41,6 +43,10 @@ type ResponseBodyBuffer interface{}
 type ModuleContext interface {
 	// HttpContextInit is called for each new Http request.
 	// Note that this must be concurrency-safe as it can be called concurrently for multiple requests.
+	//
+	// * `EnvoyFilter` is the Envoy filter object that is used to interact with the filter.
+	//  This object is unique for each Http request. The object is destroyed when the stream is destroyed.
+	//  Therefore, after EventHttpDestroy is called, the methods on this object become no-op.
 	HttpContextInit(EnvoyFilter) HttpContext
 }
 
@@ -51,31 +57,27 @@ type HttpContext interface {
 	// EventHttpRequestHeaders is called when request headers are received.
 	// The function should return the status of the operation.
 	//
-	//  * `envoyFilter` is the pointer to the Envoy filter instance.
 	//  * `requestHeaders` is the pointer to the request headers map.
 	//  * `endOfStream` is a boolean that indicates if this is the headers-only request.
-	EventHttpRequestHeaders(EnvoyFilter, RequestHeaders, bool) EventHttpRequestHeadersStatus
+	EventHttpRequestHeaders(RequestHeaders, bool) EventHttpRequestHeadersStatus
 	// EventHttpRequestBody is called when request body data is received.
 	// The function should return the status of the operation.
 	//
-	//  * `envoyFilter` is the pointer to the Envoy filter instance.
 	//  * `requestBody` is the pointer to the request body buffer.
 	//  * `endOfStream` is a boolean that indicates if this is the last data frame.
-	EventHttpRequestBody(EnvoyFilter, RequestBodyBuffer, bool) EventHttpRequestBodyStatus
+	EventHttpRequestBody(RequestBodyBuffer, bool) EventHttpRequestBodyStatus
 	// EventHttpResponseHeaders is called when response headers are received.
 	// The function should return the status of the operation.
 	//
-	//  * `envoyFilter` is the pointer to the Envoy filter instance.
 	//  * `responseHeaders` is the pointer to the response headers map.
 	//  * `endOfStream` is a boolean that indicates if this is the headers-only response.
-	EventHttpResponseHeaders(EnvoyFilter, ResponseHeaders, bool) EventHttpResponseHeadersStatus
+	EventHttpResponseHeaders(ResponseHeaders, bool) EventHttpResponseHeadersStatus
 	// EventHttpResponseBody is called when response body data is received.
 	// The function should return the status of the operation.
 	//
-	//  * `envoyFilter` is the pointer to the Envoy filter instance.
 	//  * `responseBody` is the pointer to the response body buffer.
 	//  * `endOfStream` is a boolean that indicates if this is the last data frame.
-	EventHttpResponseBody(EnvoyFilter, ResponseBodyBuffer, bool) EventHttpResponseBodyStatus
+	EventHttpResponseBody(ResponseBodyBuffer, bool) EventHttpResponseBodyStatus
 
 	// EventHttpDestroy is called when the stream is destroyed.
 	// This is called when the stream is completed or when the stream is reset.
