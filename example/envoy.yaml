@@ -33,7 +33,7 @@ static_resources:
                       # The file_path is the path to the shared object file. We share the same file for both http filter chain.
                       file_path: main
                       # This is passed to newHttpFilter in main.go
-                      plugin_config: "helloworld"
+                      filter_config: "helloworld"
                       # Since c-shared modules by the Go compiler toolchain do not support dlclose, https://github.com/golang/go/issues/11100
                       # we need to set do_not_dlclose to true to avoid the crash.
                       do_not_dlclose: true
@@ -75,7 +75,7 @@ static_resources:
                       # The file_path is the path to the shared object file. We share the same file for both http filter chain.
                       file_path: main
                       # This is passed to newHttpFilter in main.go
-                      plugin_config: "delay"
+                      filter_config: "delay"
                       # Since c-shared modules by the Go compiler toolchain do not support dlclose, https://github.com/golang/go/issues/11100
                       # we need to set do_not_dlclose to true to avoid the crash.
                       do_not_dlclose: true
