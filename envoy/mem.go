@@ -8,10 +8,10 @@ import (
 var memManager memoryManager
 
 type (
-	// memoryManager manages the heap allocated context objects.
-	// It is used to pin the context objects to the heap to avoid them being garbage collected by the Go runtime.
+	// memoryManager manages the heap allocated objects.
+	// It is used to pin the objects to the heap to avoid them being garbage collected by the Go runtime.
 	//
-	// TODO: shard the linked list of HttpContexts to reduce contention.
+	// TODO: shard the linked lists to reduce contention.
 	//
 	// TODO: is this really necessary? Pinning a pointer to the interface might work? e.g.
 	// 	...
@@ -25,18 +25,18 @@ type (
 		httpFilters      *pinedHttpFilter
 		httpFiltersMutex sync.Mutex
 
-		// httpFilterInstances holds a linked lists of HttpContext.
+		// httpFilterInstances holds a linked lists of HttpFilterInstance.
 		httpFilterInstances      *pinedHttpFilterInstance
 		httpFilterInstancesMutex sync.Mutex
 	}
 
-	// pinnedHttpContext holds a pinned HttpContext managed by the memory manager.
+	// pinedHttpFilter holds a pinned HttpFilter managed by the memory manager.
 	pinedHttpFilter struct {
 		filter     HttpFilter
 		next, prev *pinedHttpFilter
 	}
 
-	// pinnedHttpContext holds a pinned HttpContext managed by the memory manager.
+	// pinedHttpFilterInstance holds a pinned HttpFilterInstance managed by the memory manager.
 	pinedHttpFilterInstance struct {
 		filterInstance HttpFilterInstance
 		next, prev     *pinedHttpFilterInstance
@@ -44,7 +44,7 @@ type (
 	}
 )
 
-// pinHttpFilter pins the module context to the memory manager.
+// pinHttpFilter pins the HttpFilter to the memory manager.
 func (m *memoryManager) pinHttpFilter(filter HttpFilter) *pinedHttpFilter {
 	m.httpFiltersMutex.Lock()
 	defer m.httpFiltersMutex.Unlock()
