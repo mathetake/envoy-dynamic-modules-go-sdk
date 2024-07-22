@@ -20,7 +20,9 @@ lint:
 
 .PHONY: format
 format:
+	@echo "format => *.go"
 	@find . -type f -name '*.go' | xargs gofmt -s -w
+	@echo "goimports => *.go"
 	@for f in `find . -name '*.go'`; do \
 	    awk '/^import \($$/,/^\)$$/{if($$0=="")next}{print}' $$f > /tmp/fmt; \
 	    mv /tmp/fmt $$f; \

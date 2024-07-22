@@ -37,7 +37,7 @@ type RequestBodyBuffer interface{}
 type ResponseBodyBuffer interface{}
 
 // HttpFilter is an interface that represents a single http filter in the Envoy filter chain.
-// It is used to create HttpContext objects that correspond to each Http request.
+// It is used to create HttpFilterInstance(s) that correspond to each Http request.
 //
 // This is only created once per module instance via the NewHttpFilter function.
 type HttpFilter interface {

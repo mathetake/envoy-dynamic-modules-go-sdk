@@ -19,7 +19,7 @@ func (f *helloWorldFilter) NewHttpFilterInstance(envoy.EnvoyFilterInstance) envo
 	return &helloWorldHttpFilterInstance{}
 }
 
-// Destroy implements envoy.HttpContext.
+// Destroy implements envoy.HttpFilter.
 func (f *helloWorldFilter) Destroy() { fmt.Println("helloWorldFilter.Destroy called") }
 
 // helloWorldHttpFilterInstance implements envoy.HttpFilterInstance.
