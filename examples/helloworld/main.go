@@ -31,25 +31,25 @@ func (m *moduleContext) HttpContextInit(envoy.EnvoyFilter) envoy.HttpContext {
 type httpContext struct{}
 
 // EventHttpRequestHeaders implements envoy.HttpContext.
-func (h httpContext) EventHttpRequestHeaders(envoy.EnvoyFilter, envoy.RequestHeaders, bool) envoy.EventHttpRequestHeadersStatus {
+func (h httpContext) EventHttpRequestHeaders(envoy.RequestHeaders, bool) envoy.EventHttpRequestHeadersStatus {
 	fmt.Println("EventHttpRequestHeaders called")
 	return envoy.EventHttpRequestHeadersStatusContinue
 }
 
 // EventHttpRequestBody implements envoy.HttpContext.
-func (h httpContext) EventHttpRequestBody(envoy.EnvoyFilter, envoy.RequestBodyBuffer, bool) envoy.EventHttpRequestBodyStatus {
+func (h httpContext) EventHttpRequestBody(envoy.RequestBodyBuffer, bool) envoy.EventHttpRequestBodyStatus {
 	fmt.Println("EventHttpRequestBody called")
 	return envoy.EventHttpRequestBodyStatusContinue
 }
 
 // EventHttpResponseHeaders implements envoy.HttpContext.
-func (h httpContext) EventHttpResponseHeaders(envoy.EnvoyFilter, envoy.ResponseHeaders, bool) envoy.EventHttpResponseHeadersStatus {
+func (h httpContext) EventHttpResponseHeaders(envoy.ResponseHeaders, bool) envoy.EventHttpResponseHeadersStatus {
 	fmt.Println("EventHttpResponseHeaders called")
 	return envoy.EventHttpResponseHeadersStatusContinue
 }
 
 // EventHttpResponseBody implements envoy.HttpContext.
-func (h httpContext) EventHttpResponseBody(envoy.EnvoyFilter, envoy.ResponseBodyBuffer, bool) envoy.EventHttpResponseBodyStatus {
+func (h httpContext) EventHttpResponseBody(envoy.ResponseBodyBuffer, bool) envoy.EventHttpResponseBodyStatus {
 	fmt.Println("EventHttpResponseBody called")
 	return envoy.EventHttpResponseBodyStatusContinue
 }
