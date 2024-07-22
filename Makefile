@@ -4,23 +4,19 @@ golangci_lint := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.0
 .PHONY: build
 build:
 	@go build ./...
-	@find ./examples -mindepth 1 -type f -name "main.go" \
-	| xargs -I {} bash -c 'dirname {}' \
-	| xargs -I {} bash -c 'cd {} && echo "building {}" && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -buildmode=c-shared -o main ./main.go'
+	@cd example && go build -buildmode=c-shared -o main .
 
 .PHONY: test
 test:
 	@go test $(shell go list ./... | grep -v e2e)
-	@find ./examples -mindepth 1 -type f -name "main.go" \
-	| xargs -I {} bash -c 'dirname {}' \
-	| xargs -I {} bash -c 'cd {} &&  CGO_ENABLED=0 go test ./... -count=1'
+	@cd example && CGO_ENABLED=0 go test ./... -count=1
 
 .PHONY: lint
 lint:
-	@find . -name "go.mod" \
-	| grep go.mod \
-	| xargs -I {} bash -c 'dirname {}' \
-	| xargs -I {} bash -c 'echo "lint => {}"; cd {}; go run $(golangci_lint) run; '
+	@echo "lint => ./..."
+	@go run $(golangci_lint) run ./...
+	@echo "lint => example/"
+	@cd example && go run $(golangci_lint) run ./...
 
 .PHONY: format
 format:

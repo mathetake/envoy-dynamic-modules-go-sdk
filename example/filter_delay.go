@@ -8,39 +8,32 @@ import (
 	"github.com/envoyproxyx/go-sdk/envoy"
 )
 
-func main() {} // main function must be present but empty.
+// delayHttpFilter implements envoy.HttpFilter.
+type delayHttpFilter struct{ requestCounts atomic.Int32 }
 
-func init() {
-	// Set the envoy.NewHttpFilter function to create a new module context.
-	envoy.NewHttpFilter = newHttpFilter
-}
-
-// httpFilter implements envoy.HttpFilter.
-type httpFilter struct{ requestCounts atomic.Int32 }
-
-func newHttpFilter(config string) envoy.HttpFilter { return &httpFilter{} }
+func newDelayHttpFilter(string) envoy.HttpFilter { return &delayHttpFilter{} }
 
 // NewHttpFilterInstance implements envoy.HttpFilter.
-func (m *httpFilter) NewHttpFilterInstance(e envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
+func (m *delayHttpFilter) NewHttpFilterInstance(e envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
 	// NewHttpFilterInstance is called for each new Http request, so we can use a counter to track the number of requests.
 	// On the other hand, that means this function must be thread-safe.
 	id := m.requestCounts.Add(1)
-	return &httpContext{id: id, envoyFilter: e}
+	return &delayHttpFilterInstance{id: id, envoyFilter: e}
 }
 
-// Destroy implements envoy.HttpContext.
-func (m *httpFilter) Destroy() {
+// Destroy implements envoy.HttpFilter.
+func (m *delayHttpFilter) Destroy() {
 	fmt.Println("Destroy called")
 }
 
-// httpContext implements envoy.HttpContext.
-type httpContext struct {
+// delayHttpFilterInstance implements envoy.HttpFilterInstance.
+type delayHttpFilterInstance struct {
 	id          int32
 	envoyFilter envoy.EnvoyFilterInstance
 }
 
-// EventHttpRequestHeaders implements envoy.HttpContext.
-func (h httpContext) EventHttpRequestHeaders(_ envoy.RequestHeaders, _ bool) envoy.EventHttpRequestHeadersStatus {
+// EventHttpRequestHeaders implements envoy.HttpFilterInstance.
+func (h *delayHttpFilterInstance) EventHttpRequestHeaders(_ envoy.RequestHeaders, _ bool) envoy.EventHttpRequestHeadersStatus {
 	if h.id == 1 {
 		go func() {
 			fmt.Println("blocking for 1 second at EventHttpRequestHeaders with id", h.id)
@@ -55,8 +48,8 @@ func (h httpContext) EventHttpRequestHeaders(_ envoy.RequestHeaders, _ bool) env
 	return envoy.EventHttpRequestHeadersStatusContinue
 }
 
-// EventHttpRequestBody implements envoy.HttpContext.
-func (h *httpContext) EventHttpRequestBody(_ envoy.RequestBodyBuffer, _ bool) envoy.EventHttpRequestBodyStatus {
+// EventHttpRequestBody implements envoy.HttpFilterInstance.
+func (h *delayHttpFilterInstance) EventHttpRequestBody(_ envoy.RequestBodyBuffer, _ bool) envoy.EventHttpRequestBodyStatus {
 	if h.id == 2 {
 		go func() {
 			fmt.Println("blocking for 1 second at EventHttpRequestBody with id", h.id)
@@ -71,8 +64,8 @@ func (h *httpContext) EventHttpRequestBody(_ envoy.RequestBodyBuffer, _ bool) en
 	return envoy.EventHttpRequestBodyStatusContinue
 }
 
-// EventHttpResponseHeaders implements envoy.HttpContext.
-func (h *httpContext) EventHttpResponseHeaders(_ envoy.ResponseHeaders, _ bool) envoy.EventHttpResponseHeadersStatus {
+// EventHttpResponseHeaders implements envoy.HttpFilterInstance.
+func (h *delayHttpFilterInstance) EventHttpResponseHeaders(_ envoy.ResponseHeaders, _ bool) envoy.EventHttpResponseHeadersStatus {
 	if h.id == 3 {
 		go func() {
 			fmt.Println("blocking for 1 second at EventHttpResponseHeaders with id", h.id)
@@ -87,8 +80,8 @@ func (h *httpContext) EventHttpResponseHeaders(_ envoy.ResponseHeaders, _ bool) 
 	return envoy.EventHttpResponseHeadersStatusContinue
 }
 
-// EventHttpResponseBody implements envoy.HttpContext.
-func (h *httpContext) EventHttpResponseBody(_ envoy.ResponseBodyBuffer, _ bool) envoy.EventHttpResponseBodyStatus {
+// EventHttpResponseBody implements envoy.HttpFilterInstance.
+func (h *delayHttpFilterInstance) EventHttpResponseBody(_ envoy.ResponseBodyBuffer, _ bool) envoy.EventHttpResponseBodyStatus {
 	if h.id == 4 {
 		go func() {
 			fmt.Println("blocking for 1 second at EventHttpResponseBody with id", h.id)
@@ -103,5 +96,5 @@ func (h *httpContext) EventHttpResponseBody(_ envoy.ResponseBodyBuffer, _ bool) 
 	return envoy.EventHttpResponseBodyStatusContinue
 }
 
-// EventHttpDestroy implements envoy.HttpContext.
-func (h *httpContext) EventHttpDestroy(envoy.EnvoyFilterInstance) {}
+// EventHttpDestroy implements envoy.HttpFilterInstance.
+func (h *delayHttpFilterInstance) EventHttpDestroy(envoy.EnvoyFilterInstance) {}
