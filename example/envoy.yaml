@@ -26,10 +26,17 @@ static_resources:
                   ######################################################################################################
                   - name: envoy.http.dynamic_modules
                     typed_config:
+                      # Schema is defined at https://github.com/envoyproxyx/envoyx/blob/main/x/config.proto
                       "@type": type.googleapis.com/envoy.extensions.filters.http.dynamic_modules.v3.DynamicModuleConfig
+                      # The name is only used for logging by Envoy, not for users.
                       name: test
+                      # The file_path is the path to the shared object file. We share the same file for both http filter chain.
                       file_path: main
-                      module_config: "helloworld"
+                      # This is passed to newHttpFilter in main.go
+                      plugin_config: "helloworld"
+                      # Since c-shared modules by the Go compiler toolchain do not support dlclose, https://github.com/golang/go/issues/11100
+                      # we need to set do_not_dlclose to true to avoid the crash.
+                      do_not_dlclose: true
                   ######################################################################################################
                   - name: router
                     typed_config:
@@ -61,10 +68,17 @@ static_resources:
                   ######################################################################################################
                   - name: envoy.http.dynamic_modules
                     typed_config:
+                      # Schema is defined at https://github.com/envoyproxyx/envoyx/blob/main/x/config.proto
                       "@type": type.googleapis.com/envoy.extensions.filters.http.dynamic_modules.v3.DynamicModuleConfig
-                      name: test
+                      # The name is only used for logging by Envoy, not for users.
+                      name: delay
+                      # The file_path is the path to the shared object file. We share the same file for both http filter chain.
                       file_path: main
-                      module_config: "delay"
+                      # This is passed to newHttpFilter in main.go
+                      plugin_config: "delay"
+                      # Since c-shared modules by the Go compiler toolchain do not support dlclose, https://github.com/golang/go/issues/11100
+                      # we need to set do_not_dlclose to true to avoid the crash.
+                      do_not_dlclose: true
                   ######################################################################################################
                   - name: router
                     typed_config:
