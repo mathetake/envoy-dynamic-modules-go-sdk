@@ -9,22 +9,27 @@ import (
 func main() {} // main function must be present but empty.
 
 func init() {
-	// Set the envoy.NewModuleContext function to create a new module context.
-	envoy.NewModuleContext = newModuleContext
+	// Set the envoy.NewHttpFilter function to create a new module context.
+	envoy.NewHttpFilter = newHttpFilter
 }
 
-// moduleContext implements envoy.ModuleContext.
-type moduleContext struct{}
+// httpFilter implements envoy.HttpFilter.
+type httpFilter struct{}
 
-func newModuleContext(config string) envoy.ModuleContext {
-	fmt.Println("NewModuleContext called:", config)
-	return &moduleContext{}
+func newHttpFilter(config string) envoy.HttpFilter {
+	fmt.Println("NewHttpFilter called:", config)
+	return &httpFilter{}
 }
 
-// HttpContextInit implements envoy.ModuleContext and is called for each new Http request.
-func (m *moduleContext) HttpContextInit(envoy.EnvoyFilter) envoy.HttpContext {
-	fmt.Println("HttpContextInit called")
+// NewHttpFilterInstance implements envoy.HttpFilter.
+func (m *httpFilter) NewHttpFilterInstance(envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
+	fmt.Println("NewHttpFilterInstance called")
 	return &httpContext{}
+}
+
+// Destroy implements envoy.HttpContext.
+func (m *httpFilter) Destroy() {
+	fmt.Println("Destroy called")
 }
 
 // httpContext implements envoy.HttpContext.
@@ -55,6 +60,6 @@ func (h httpContext) EventHttpResponseBody(envoy.ResponseBodyBuffer, bool) envoy
 }
 
 // EventHttpDestroy implements envoy.HttpContext.
-func (h httpContext) EventHttpDestroy(envoy.EnvoyFilter) {
+func (h httpContext) EventHttpDestroy(envoy.EnvoyFilterInstance) {
 	fmt.Println("EventHttpDestroy called")
 }

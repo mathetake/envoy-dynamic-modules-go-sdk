@@ -10,115 +10,106 @@ import (
 	"unsafe"
 )
 
-// This file corresponds to the event hooks defined in https://github.com/envoyproxyx/abi/blob/main/abi.h.
+//export __envoy_dynamic_module_v1_event_program_init
+func __envoy_dynamic_module_v1_event_program_init() C.size_t {
+	return 0
+}
 
-// __envoy_dynamic_module_v1_event_module_init is called by the main thread when the module is
-// loaded exactly once per module. The function returns 0 on success and non-zero on failure.
-//
-//export __envoy_dynamic_module_v1_event_module_init
-func __envoy_dynamic_module_v1_event_module_init(
-	configPtr C.__envoy_dynamic_module_v1_type_ModuleConfigPtr,
-	configSize C.__envoy_dynamic_module_v1_type_ModuleConfigSize) C.__envoy_dynamic_module_v1_type_ModuleContextPtr {
+//export __envoy_dynamic_module_v1_event_http_filter_init
+func __envoy_dynamic_module_v1_event_http_filter_init(
+	configPtr C.__envoy_dynamic_module_v1_type_HttpFilterConfigPtr,
+	configSize C.__envoy_dynamic_module_v1_type_HttpFilterConfigSize) C.__envoy_dynamic_module_v1_type_HttpFilterPtr {
 	rawStr := unsafe.String((*byte)(unsafe.Pointer(uintptr(configPtr))), configSize)
 	// Copy the config string to Go memory so that the caller can take ownership of the memory.
 	var configStrCopy = make([]byte, len(rawStr))
 	copy(configStrCopy, rawStr)
 	// Call the exported function from the Go module.
-	moduleContext := NewModuleContext(rawStr)
-	memManager.pinModuleContext(moduleContext)
-	return C.__envoy_dynamic_module_v1_type_ModuleContextPtr((uintptr)(unsafe.Pointer(memManager.unwrapPinnedModuleContext())))
+	httpFilter := NewHttpFilter(rawStr)
+	pined := memManager.pinHttpFilter(httpFilter)
+	return C.__envoy_dynamic_module_v1_type_HttpFilterPtr((uintptr)(unsafe.Pointer(pined)))
 }
 
-// __envoy_dynamic_module_v1_event_http_context_init is called by any worker thread when a new
-// stream is created. That means that the function should be thread-safe.
-//
-// The function returns a pointer to a new instance of the context or nullptr on failure.
-// The lifetime of the returned pointer should be managed by the dynamic module.
-//
-//export __envoy_dynamic_module_v1_event_http_context_init
-func __envoy_dynamic_module_v1_event_http_context_init(
-	envoyFilterPtr C.__envoy_dynamic_module_v1_type_EnvoyFilterPtr,
-	moduleCtx C.__envoy_dynamic_module_v1_type_ModuleContextPtr,
-) C.__envoy_dynamic_module_v1_type_HttpContextPtr {
+//export __envoy_dynamic_module_v1_event_http_filter_destroy
+func __envoy_dynamic_module_v1_event_http_filter_destroy(
+	httpFilterPtr C.__envoy_dynamic_module_v1_type_HttpFilterPtr) {
+	httpFilter := memManager.unwrapPinnedHttpFilter(uintptr(httpFilterPtr))
+	httpFilter.filter.Destroy()
+	memManager.unpinHttpFilter(httpFilter)
+}
+
+//export __envoy_dynamic_module_v1_event_http_filter_instance_init
+func __envoy_dynamic_module_v1_event_http_filter_instance_init(
+	envoyFilterPtr C.__envoy_dynamic_module_v1_type_EnvoyFilterInstanceInstancePtr,
+	moduleCtx C.__envoy_dynamic_module_v1_type_HttpFilterPtr,
+) C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr {
 	envoyPtr := &envoyFilterC{raw: envoyFilterPtr}
-	m := *(*ModuleContext)(unsafe.Pointer(uintptr(moduleCtx))) //nolint:govet
-	httpCtx := m.HttpContextInit(envoyPtr)
-	pined := memManager.pinHttpContext(httpCtx)
+	m := *(*HttpFilter)(unsafe.Pointer(uintptr(moduleCtx))) //nolint:govet
+	httpInstance := m.NewHttpFilterInstance(envoyPtr)
+	pined := memManager.pinHttpFilterInstance(httpInstance)
 	pined.envoyFilter = envoyPtr
-	return C.__envoy_dynamic_module_v1_type_HttpContextPtr(uintptr((unsafe.Pointer(pined))))
+	return C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr(uintptr((unsafe.Pointer(pined))))
 }
 
-// __envoy_dynamic_module_v1_event_http_request_headers is called when request headers are received.
-//
-//export __envoy_dynamic_module_v1_event_http_request_headers
-func __envoy_dynamic_module_v1_event_http_request_headers(
-	httpContextPtr C.__envoy_dynamic_module_v1_type_HttpContextPtr,
+//export __envoy_dynamic_module_v1_event_http_filter_instance_request_headers
+func __envoy_dynamic_module_v1_event_http_filter_instance_request_headers(
+	httpContextPtr C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr,
 	requestHeadersPtr C.__envoy_dynamic_module_v1_type_HttpRequestHeadersMapPtr,
 	endOfStream C.__envoy_dynamic_module_v1_type_EndOfStream,
 ) C.__envoy_dynamic_module_v1_type_EventHttpRequestHeadersStatus {
-	httpCtx := unwrapRawPinHttpContext(uintptr(httpContextPtr))
-	mapPtr := requestHeadersC{Raw: requestHeadersPtr}
+	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpContextPtr))
+	mapPtr := requestHeadersC{raw: requestHeadersPtr}
 	end := endOfStream != 0
-	result := httpCtx.ctx.EventHttpRequestHeaders(mapPtr, end)
+	result := httpInstance.filterInstance.EventHttpRequestHeaders(mapPtr, end)
 	return C.__envoy_dynamic_module_v1_type_EventHttpRequestHeadersStatus(result)
 }
 
-// __envoy_dynamic_module_v1_event_http_request_body is called when request body data is received.
-//
-//export __envoy_dynamic_module_v1_event_http_request_body
-func __envoy_dynamic_module_v1_event_http_request_body(
-	httpContextPtr C.__envoy_dynamic_module_v1_type_HttpContextPtr,
+//export __envoy_dynamic_module_v1_event_http_filter_instance_request_body
+func __envoy_dynamic_module_v1_event_http_filter_instance_request_body(
+	httpContextPtr C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr,
 	buffer C.__envoy_dynamic_module_v1_type_HttpRequestBodyBufferPtr,
 	endOfStream C.__envoy_dynamic_module_v1_type_EndOfStream) C.__envoy_dynamic_module_v1_type_EventHttpRequestBodyStatus {
-	httpCtx := unwrapRawPinHttpContext(uintptr(httpContextPtr))
-	buf := requestBodyBufferC{Raw: buffer}
+	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpContextPtr))
+	buf := requestBodyBufferC{raw: buffer}
 	end := endOfStream != 0
-	result := httpCtx.ctx.EventHttpRequestBody(buf, end)
+	result := httpInstance.filterInstance.EventHttpRequestBody(buf, end)
 	return C.__envoy_dynamic_module_v1_type_EventHttpRequestBodyStatus(result)
 }
 
-// __envoy_dynamic_module_v1_event_http_response_headers is called when response headers are
-// received.
-//
-//export __envoy_dynamic_module_v1_event_http_response_headers
-func __envoy_dynamic_module_v1_event_http_response_headers(
-	httpContextPtr C.__envoy_dynamic_module_v1_type_HttpContextPtr,
+//export __envoy_dynamic_module_v1_event_http_filter_instance_response_headers
+func __envoy_dynamic_module_v1_event_http_filter_instance_response_headers(
+	httpContextPtr C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr,
 	responseHeadersMapPtr C.__envoy_dynamic_module_v1_type_HttpResponseHeaderMapPtr,
 	endOfStream C.__envoy_dynamic_module_v1_type_EndOfStream) C.__envoy_dynamic_module_v1_type_EventHttpResponseHeadersStatus {
-	httpCtx := unwrapRawPinHttpContext(uintptr(httpContextPtr))
-	mapPtr := responseHeadersC{Raw: responseHeadersMapPtr}
+	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpContextPtr))
+	mapPtr := responseHeadersC{raw: responseHeadersMapPtr}
 	end := endOfStream != 0
-	result := httpCtx.ctx.EventHttpResponseHeaders(mapPtr, end)
+	result := httpInstance.filterInstance.EventHttpResponseHeaders(mapPtr, end)
 	return C.__envoy_dynamic_module_v1_type_EventHttpResponseHeadersStatus(result)
 }
 
-// __envoy_dynamic_module_v1_event_http_response_body is called when response body data is received.
-//
-//export __envoy_dynamic_module_v1_event_http_response_body
-func __envoy_dynamic_module_v1_event_http_response_body(
-	httpContextPtr C.__envoy_dynamic_module_v1_type_HttpContextPtr,
+//export __envoy_dynamic_module_v1_event_http_filter_instance_response_body
+func __envoy_dynamic_module_v1_event_http_filter_instance_response_body(
+	httpContextPtr C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr,
 	buffer C.__envoy_dynamic_module_v1_type_HttpResponseBodyBufferPtr,
 	endOfStream C.__envoy_dynamic_module_v1_type_EndOfStream) C.__envoy_dynamic_module_v1_type_EventHttpResponseBodyStatus {
-	httpCtx := unwrapRawPinHttpContext(uintptr(httpContextPtr))
-	buf := responseBodyBufferC{Raw: buffer}
+	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpContextPtr))
+	buf := responseBodyBufferC{raw: buffer}
 	end := endOfStream != 0
-	result := httpCtx.ctx.EventHttpResponseBody(buf, end)
+	result := httpInstance.filterInstance.EventHttpResponseBody(buf, end)
 	return C.__envoy_dynamic_module_v1_type_EventHttpResponseBodyStatus(result)
 }
 
-// __envoy_dynamic_module_v1_event_http_destroy is called when the stream is destroyed.
-//
-//export __envoy_dynamic_module_v1_event_http_destroy
-func __envoy_dynamic_module_v1_event_http_destroy(
-	httpContextPtr C.__envoy_dynamic_module_v1_type_HttpContextPtr) {
-	httpCtx := unwrapRawPinHttpContext(uintptr(httpContextPtr))
-	httpCtx.ctx.EventHttpDestroy(httpCtx.envoyFilter)
-	httpCtx.envoyFilter.(*envoyFilterC).destroyed = true
-	memManager.removeHttpContext((*pinedHttpContext)(unsafe.Pointer(uintptr(httpContextPtr))))
+//export __envoy_dynamic_module_v1_event_http_filter_instance_destroy
+func __envoy_dynamic_module_v1_event_http_filter_instance_destroy(
+	httpContextPtr C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr) {
+	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpContextPtr))
+	httpInstance.filterInstance.EventHttpDestroy(httpInstance.envoyFilter)
+	httpInstance.envoyFilter.(*envoyFilterC).destroyed = true
+	memManager.unpinHttpFilterInstance((*pinedHttpFilterInstance)(unsafe.Pointer(uintptr(httpContextPtr))))
 }
 
 type envoyFilterC struct {
-	raw       C.__envoy_dynamic_module_v1_type_EnvoyFilterPtr
+	raw       C.__envoy_dynamic_module_v1_type_EnvoyFilterInstanceInstancePtr
 	destroyed bool
 }
 
@@ -141,17 +132,17 @@ func (c *envoyFilterC) Destroyed() bool {
 }
 
 type requestHeadersC struct {
-	Raw C.__envoy_dynamic_module_v1_type_HttpRequestHeadersMapPtr
+	raw C.__envoy_dynamic_module_v1_type_HttpRequestHeadersMapPtr
 }
 
 type responseHeadersC struct {
-	Raw C.__envoy_dynamic_module_v1_type_HttpResponseHeaderMapPtr
+	raw C.__envoy_dynamic_module_v1_type_HttpResponseHeaderMapPtr
 }
 
 type requestBodyBufferC struct {
-	Raw C.__envoy_dynamic_module_v1_type_HttpRequestBodyBufferPtr
+	raw C.__envoy_dynamic_module_v1_type_HttpRequestBodyBufferPtr
 }
 
 type responseBodyBufferC struct {
-	Raw C.__envoy_dynamic_module_v1_type_HttpResponseBodyBufferPtr
+	raw C.__envoy_dynamic_module_v1_type_HttpResponseBodyBufferPtr
 }

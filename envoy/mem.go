@@ -16,58 +16,92 @@ type (
 	// TODO: is this really necessary? Pinning a pointer to the interface might work? e.g.
 	// 	...
 	//   pinner := runtime.Pinner{}
-	//   wrapper := &pinedHttpContext{ctx: ctx}
+	//   wrapper := &pinedHttpFilterInstance{ctx: ctx}
 	//   pinn.Pinned(wrapper)
 	// 	...
 	//  does this work even when the data inside the interface contains pointers?
 	memoryManager struct {
-		// moduleContext holds the module context.
-		moduleContext ModuleContext
-		// httpContexts holds a linked lists of HttpContext.
-		httpContexts      *pinedHttpContext
-		httpContextsMutex sync.Mutex
+		// httpFilters holds a linked lists of HttpFilter.
+		httpFilters      *pinedHttpFilter
+		httpFiltersMutex sync.Mutex
+
+		// httpFilterInstances holds a linked lists of HttpContext.
+		httpFilterInstances      *pinedHttpFilterInstance
+		httpFilterInstancesMutex sync.Mutex
 	}
+
 	// pinnedHttpContext holds a pinned HttpContext managed by the memory manager.
-	pinedHttpContext struct {
-		ctx         HttpContext
-		next, prev  *pinedHttpContext
-		envoyFilter EnvoyFilter
+	pinedHttpFilter struct {
+		filter     HttpFilter
+		next, prev *pinedHttpFilter
+	}
+
+	// pinnedHttpContext holds a pinned HttpContext managed by the memory manager.
+	pinedHttpFilterInstance struct {
+		filterInstance HttpFilterInstance
+		next, prev     *pinedHttpFilterInstance
+		envoyFilter    EnvoyFilterInstance
 	}
 )
 
-// pinModuleContext pins the module context to the memory manager.
-func (m *memoryManager) pinModuleContext(ctx ModuleContext) {
-	m.moduleContext = ctx
-}
+// pinHttpFilter pins the module context to the memory manager.
+func (m *memoryManager) pinHttpFilter(filter HttpFilter) *pinedHttpFilter {
+	m.httpFiltersMutex.Lock()
+	defer m.httpFiltersMutex.Unlock()
 
-func (m *memoryManager) unwrapPinnedModuleContext() *ModuleContext {
-	return &m.moduleContext
-}
-
-func (m *memoryManager) pinHttpContext(ctx HttpContext) *pinedHttpContext {
-	m.httpContextsMutex.Lock()
-	defer m.httpContextsMutex.Unlock()
-	item := &pinedHttpContext{ctx: ctx, next: m.httpContexts, prev: nil}
-	if m.httpContexts != nil {
-		m.httpContexts.prev = item
+	item := &pinedHttpFilter{filter: filter, next: m.httpFilters, prev: nil}
+	if m.httpFilters != nil {
+		m.httpFilters.prev = item
 	}
-	m.httpContexts = item
+	m.httpFilters = item
 	return item
 }
 
-func (m *memoryManager) removeHttpContext(ctx *pinedHttpContext) {
-	m.httpContextsMutex.Lock()
-	defer m.httpContextsMutex.Unlock()
-	if ctx.prev != nil {
-		ctx.prev.next = ctx.next
+func (m *memoryManager) unpinHttpFilter(filter *pinedHttpFilter) {
+	m.httpFiltersMutex.Lock()
+	defer m.httpFiltersMutex.Unlock()
+	if filter.prev != nil {
+		filter.prev.next = filter.next
 	} else {
-		m.httpContexts = ctx.next
+		m.httpFilters = filter.next
 	}
-	if ctx.next != nil {
-		ctx.next.prev = ctx.prev
+	if filter.next != nil {
+		filter.next.prev = filter.prev
 	}
 }
 
-func unwrapRawPinHttpContext(rawPingedHttpContext uintptr) *pinedHttpContext {
-	return (*pinedHttpContext)(unsafe.Pointer(rawPingedHttpContext))
+// unwrapPinnedHttpFilter unwraps the pinned http filter.
+func (m *memoryManager) unwrapPinnedHttpFilter(raw uintptr) *pinedHttpFilter {
+	return (*pinedHttpFilter)(unsafe.Pointer(raw))
+}
+
+// pinHttpFilterInstance pins the http filter instance to the memory manager.
+func (m *memoryManager) pinHttpFilterInstance(filterInstance HttpFilterInstance) *pinedHttpFilterInstance {
+	m.httpFilterInstancesMutex.Lock()
+	defer m.httpFilterInstancesMutex.Unlock()
+	item := &pinedHttpFilterInstance{filterInstance: filterInstance, next: m.httpFilterInstances, prev: nil}
+	if m.httpFilterInstances != nil {
+		m.httpFilterInstances.prev = item
+	}
+	m.httpFilterInstances = item
+	return item
+}
+
+// unwrapPinnedHttpFilterInstance unwraps the pinned http filter instance from the memory manager.
+func (m *memoryManager) unpinHttpFilterInstance(filterInstance *pinedHttpFilterInstance) {
+	m.httpFilterInstancesMutex.Lock()
+	defer m.httpFilterInstancesMutex.Unlock()
+	if filterInstance.prev != nil {
+		filterInstance.prev.next = filterInstance.next
+	} else {
+		m.httpFilterInstances = filterInstance.next
+	}
+	if filterInstance.next != nil {
+		filterInstance.next.prev = filterInstance.prev
+	}
+}
+
+// unwrapRawPinHttpFilterInstance unwraps the raw pointer to the pinned http filter instance.
+func unwrapRawPinHttpFilterInstance(raw uintptr) *pinedHttpFilterInstance {
+	return (*pinedHttpFilterInstance)(unsafe.Pointer(raw))
 }

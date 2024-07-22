@@ -11,7 +11,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestFoo(t *testing.T) {
-	m := &moduleContext{}
+	m := &httpFilter{}
 	fmt.Println(m)
 	fmt.Println("come on")
 }

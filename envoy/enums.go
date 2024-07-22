@@ -11,7 +11,7 @@ const (
 	// EventHttpRequestHeadersStatusStopIteration indicates that Envoy shouldn't continue
 	// from processing the headers and should stop filter iteration. In other words, HttpContext.EventHttpRequestBody
 	// will be called while not sending headers to the upstream. The header
-	// processing can be resumed by either calling EnvoyFilter.ContinueRequest, or returns
+	// processing can be resumed by either calling EnvoyFilterInstance.ContinueRequest, or returns
 	// continue status from the HttpContext.EventHttpRequestBody.
 	EventHttpRequestHeadersStatusStopIteration EventHttpRequestHeadersStatus = 1
 	// EventHttpRequestHeadersStatusStopAllIterationAndBuffer indicates
@@ -19,7 +19,7 @@ const (
 	// until the limit is reached. When the limit is reached, Envoy will stop buffering and returns 500
 	// to the client. This means that HttpContext.EventHttpRequestBody will not be called.
 	//
-	// The header processing can be resumed by either calling EnvoyFilter.ContinueRequest, or
+	// The header processing can be resumed by either calling EnvoyFilterInstance.ContinueRequest, or
 	// returns continue status from the HttpContext.EventHttpRequestBody.
 	EventHttpRequestHeadersStatusStopAllIterationAndBuffer EventHttpRequestHeadersStatus = 3
 )
@@ -36,7 +36,7 @@ const (
 	// client.
 	//
 	// This stops sending body data to the upstream, so if the module wants to continue sending body
-	// data, it should call EnvoyFilter.ContinueRequest or return continue status in the
+	// data, it should call EnvoyFilterInstance.ContinueRequest or return continue status in the
 	// subsequent HttpContext.EventHttpRequestBody calls.
 	EventHttpRequestBodyStatusStopIterationAndBuffer EventHttpRequestBodyStatus = 3
 )
@@ -50,7 +50,7 @@ const (
 	// EventHttpResponseHeadersStatusStopIteration indicates that Envoy shouldn't continue
 	// from processing the headers and should stop filter iteration. In other words, EventHttpResponseBody
 	// will be called while not sending headers to the upstream. The header
-	// processing can be resumed by either calling EnvoyFilter.ContinueResponse, or returns
+	// processing can be resumed by either calling EnvoyFilterInstance.ContinueResponse, or returns
 	// continue status from the EventHttpResponseBody.
 	EventHttpResponseHeadersStatusStopIteration EventHttpResponseHeadersStatus = 1
 
@@ -59,7 +59,7 @@ const (
 	// until the limit is reached. When the limit is reached, Envoy will stop buffering and returns 500
 	// to the client. This means that HttpContext.EventHttpResponseBody will not be called.
 	//
-	// The header processing can be resumed by either calling EnvoyFilter.ContinueResponse, or
+	// The header processing can be resumed by either calling EnvoyFilterInstance.ContinueResponse, or
 	// returns continue status from the HttpContext.EventHttpResponseBody.
 	EventHttpResponseHeadersStatusStopAllIterationAndBuffer EventHttpResponseHeadersStatus = 3
 )
@@ -76,7 +76,7 @@ const (
 	// client.
 	//
 	// This stops sending body data to the upstream, so if the module wants to continue sending body
-	// data, it should call EnvoyFilter.ContinueResponse or return continue status in the
+	// data, it should call EnvoyFilterInstance.ContinueResponse or return continue status in the
 	// subsequent HttpContext.EventHttpResponseBody calls.
 	EventHttpResponseBodyStatusStopIterationAndBuffer EventHttpResponseBodyStatus = 1
 )
