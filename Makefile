@@ -13,7 +13,7 @@ test:
 	@go test $(shell go list ./... | grep -v e2e)
 	@find ./examples -mindepth 1 -type f -name "main.go" \
 	| xargs -I {} bash -c 'dirname {}' \
-	| xargs -I {} bash -c 'cd {} &&  CGO_ENABLED=0 go test ./...'
+	| xargs -I {} bash -c 'cd {} &&  CGO_ENABLED=0 go test ./... -count=1'
 
 .PHONY: lint
 lint:

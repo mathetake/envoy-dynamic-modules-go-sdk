@@ -36,9 +36,9 @@ func TestHelloWorld(t *testing.T) {
 
 	// Check if the log contains the expected output.
 	requireEventuallyContainsMessages(t, stdOut,
-		"NewModuleContext called",
+		"NewHttpFilter called",
 		"this is configuration passed from envoy.yaml",
-		"HttpContextInit called",
+		"NewHttpFilterInstance called",
 		"EventHttpRequestHeaders called",
 		"EventHttpRequestBody called",
 		"EventHttpResponseHeaders called",

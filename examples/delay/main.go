@@ -11,27 +11,32 @@ import (
 func main() {} // main function must be present but empty.
 
 func init() {
-	// Set the envoy.NewModuleContext function to create a new module context.
-	envoy.NewModuleContext = newModuleContext
+	// Set the envoy.NewHttpFilter function to create a new module context.
+	envoy.NewHttpFilter = newHttpFilter
 }
 
-// moduleContext implements envoy.ModuleContext.
-type moduleContext struct{ requestCounts atomic.Int32 }
+// httpFilter implements envoy.HttpFilter.
+type httpFilter struct{ requestCounts atomic.Int32 }
 
-func newModuleContext(config string) envoy.ModuleContext { return &moduleContext{} }
+func newHttpFilter(config string) envoy.HttpFilter { return &httpFilter{} }
 
-// HttpContextInit implements envoy.ModuleContext and is called for each new Http request.
-func (m *moduleContext) HttpContextInit(e envoy.EnvoyFilter) envoy.HttpContext {
-	// HttpContextInit is called for each new Http request, so we can use a counter to track the number of requests.
+// NewHttpFilterInstance implements envoy.HttpFilter.
+func (m *httpFilter) NewHttpFilterInstance(e envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
+	// NewHttpFilterInstance is called for each new Http request, so we can use a counter to track the number of requests.
 	// On the other hand, that means this function must be thread-safe.
 	id := m.requestCounts.Add(1)
 	return &httpContext{id: id, envoyFilter: e}
 }
 
+// Destroy implements envoy.HttpContext.
+func (m *httpFilter) Destroy() {
+	fmt.Println("Destroy called")
+}
+
 // httpContext implements envoy.HttpContext.
 type httpContext struct {
 	id          int32
-	envoyFilter envoy.EnvoyFilter
+	envoyFilter envoy.EnvoyFilterInstance
 }
 
 // EventHttpRequestHeaders implements envoy.HttpContext.
@@ -99,4 +104,4 @@ func (h *httpContext) EventHttpResponseBody(_ envoy.ResponseBodyBuffer, _ bool) 
 }
 
 // EventHttpDestroy implements envoy.HttpContext.
-func (h *httpContext) EventHttpDestroy(envoy.EnvoyFilter) {}
+func (h *httpContext) EventHttpDestroy(envoy.EnvoyFilterInstance) {}
