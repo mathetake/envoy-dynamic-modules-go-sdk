@@ -12,8 +12,6 @@ Please note that many examples are also designed as an E2E test for this SDK its
 
 To build and run the example, run the following, assuming you have `envoy` installed as exaplined in [README.md](../README.md):
 
-```bash
-
 ```
 CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -buildmode=c-shared -o main .
 envoy -c envoy.yaml
