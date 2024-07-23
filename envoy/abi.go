@@ -7,6 +7,7 @@ package envoy
 */
 import "C"
 import (
+	"io"
 	"runtime"
 	"unsafe"
 )
@@ -129,6 +130,16 @@ func (c *envoyFilterC) ContinueResponse() {
 		return
 	}
 	C.__envoy_dynamic_module_v1_http_continue_response(c.raw)
+}
+
+// GetRequestBodyBuffer implements EnvoyFilterInstance.
+func (c *envoyFilterC) GetRequestBodyBuffer() RequestBodyBuffer {
+	return requestBodyBufferC{raw: C.__envoy_dynamic_module_v1_http_get_request_body_buffer(c.raw)}
+}
+
+// GetResponseBodyBuffer implements EnvoyFilterInstance.
+func (c *envoyFilterC) GetResponseBodyBuffer() ResponseBodyBuffer {
+	return responseBodyBufferC{raw: C.__envoy_dynamic_module_v1_http_get_response_body_buffer(c.raw)}
 }
 
 // Destroyed implements EnvoyFilterInstance.
@@ -278,4 +289,102 @@ func (r responseHeadersC) set(keyPtr uintptr, keySize int, valuePtr uintptr, val
 		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(valuePtr),
 		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(valueSize),
 	)
+}
+
+// Length implements RequestBodyBuffer.
+func (r requestBodyBufferC) Length() int {
+	return int(C.__envoy_dynamic_module_v1_http_get_request_body_buffer_length(r.raw))
+}
+
+// Slice implements RequestBodyBuffer.
+func (r requestBodyBufferC) Slices(iter func(view []byte)) {
+	sliceCount := C.__envoy_dynamic_module_v1_http_get_request_body_buffer_slices_count(r.raw)
+	for i := C.size_t(0); i < sliceCount; i++ {
+		var ptr *byte
+		var size int
+		C.__envoy_dynamic_module_v1_http_get_request_body_buffer_slice(r.raw,
+			i,
+			C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&ptr))),
+			C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&size))),
+		)
+		iter(unsafe.Slice(ptr, size))
+	}
+}
+
+// Copy implements RequestBodyBuffer.
+func (r requestBodyBufferC) Copy() []byte {
+	bytes := make([]byte, r.Length())
+	offset := 0
+	r.Slices(func(view []byte) {
+		copy(bytes[offset:], view)
+		offset += len(view)
+	})
+	return bytes
+}
+
+// ReadAt implements io.ReaderAt.
+func (r requestBodyBufferC) ReadAt(p []byte, off int64) (n int, err error) {
+	length := r.Length()
+	if off >= int64(length) {
+		return 0, io.EOF
+	}
+	diff := int64(length) - off
+	if int64(len(p)) > diff {
+		p = p[:diff]
+		err = io.EOF
+	}
+	C.__envoy_dynamic_module_v1_http_copy_out_response_body_buffer(
+		r.raw, C.size_t(off), C.size_t(len(p)),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(uintptr(unsafe.Pointer(&p[0]))),
+	)
+	return len(p), err
+}
+
+// Length implements ResponseBodyBuffer.
+func (r responseBodyBufferC) Length() int {
+	return int(C.__envoy_dynamic_module_v1_http_get_response_body_buffer_length(r.raw))
+}
+
+// Slice implements ResponseBodyBuffer.
+func (r responseBodyBufferC) Slices(iter func(view []byte)) {
+	sliceCount := C.__envoy_dynamic_module_v1_http_get_response_body_buffer_slices_count(r.raw)
+	for i := C.size_t(0); i < sliceCount; i++ {
+		var ptr *byte
+		var size int
+		C.__envoy_dynamic_module_v1_http_get_response_body_buffer_slice(r.raw,
+			i,
+			C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&ptr))),
+			C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&size))),
+		)
+		iter(unsafe.Slice(ptr, size))
+	}
+}
+
+// Copy implements ResponseBodyBuffer.
+func (r responseBodyBufferC) Copy() []byte {
+	bytes := make([]byte, r.Length())
+	offset := 0
+	r.Slices(func(view []byte) {
+		copy(bytes[offset:], view)
+		offset += len(view)
+	})
+	return bytes
+}
+
+// ReadAt implements io.ReaderAt.
+func (r responseBodyBufferC) ReadAt(p []byte, off int64) (n int, err error) {
+	length := r.Length()
+	if off >= int64(length) {
+		return 0, io.EOF
+	}
+	diff := int64(length) - off
+	if int64(len(p)) > diff {
+		p = p[:diff]
+		err = io.EOF
+	}
+	C.__envoy_dynamic_module_v1_http_copy_out_response_body_buffer(
+		r.raw, C.size_t(off), C.size_t(len(p)),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(uintptr(unsafe.Pointer(&p[0]))),
+	)
+	return len(p), err
 }

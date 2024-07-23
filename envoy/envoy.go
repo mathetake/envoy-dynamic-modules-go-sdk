@@ -1,6 +1,9 @@
 package envoy
 
-import "unsafe"
+import (
+	"io"
+	"unsafe"
+)
 
 // NewHttpFilter is a function that creates a new HttpFilter that corresponds to a filter in the Envoy filter chain.
 // This is a global variable that should be set in the init function in the program once.
@@ -14,6 +17,10 @@ var NewHttpFilter func(config string) HttpFilter
 // EnvoyFilterInstance is an opaque object that represents the underlying Envoy Http filter instance.
 // This is used to interact with it from the module code.
 type EnvoyFilterInstance interface {
+	// GetRequestBodyBuffer returns the entire request body buffer that is currently buffered.
+	GetRequestBodyBuffer() RequestBodyBuffer
+	// GetResponseBodyBuffer returns the entire response body buffer that is currently buffered.
+	GetResponseBodyBuffer() ResponseBodyBuffer
 	// ContinueRequest is a function that continues the request processing.
 	ContinueRequest()
 	// ContinueResponse is a function that continues the response processing.
@@ -70,12 +77,42 @@ func (h HeaderValue) Equal(str string) bool {
 }
 
 // RequestBodyBuffer is an opaque object that represents the underlying Envoy Http request body buffer.
-// This is used to interact with it from the module code.
-type RequestBodyBuffer interface{}
+// This is used to interact with it from the module code. A buffer consists of a multiple slices of data,
+// not a single contiguous buffer.
+//
+// This provides a zero-copy view of the HTTP request body buffer.
+//
+// This implements io.ReaderAt interface.
+type RequestBodyBuffer interface {
+	io.ReaderAt
+
+	// Length returns the total number of bytes in the buffer.
+	Length() int
+	// Slices iterates over the slices of the buffer. The view byte slice must NOT be saved as the
+	// memory is owned by the Envoy. To take a copy of the buffer, use the Copy method.
+	Slices(iter func(view []byte))
+	// Copy returns a copy of the bytes in the buffer as a single contiguous buffer.
+	Copy() []byte
+}
 
 // ResponseBodyBuffer is an opaque object that represents the underlying Envoy Http response body buffer.
-// This is used to interact with it from the module code.
-type ResponseBodyBuffer interface{}
+// This is used to interact with it from the module code. A buffer consists of a multiple slices of data,
+// not a single contiguous buffer.
+//
+// This provides a zero-copy view of the HTTP response body buffer.
+//
+// This implements io.ReaderAt interface.
+type ResponseBodyBuffer interface {
+	io.ReaderAt
+
+	// Length returns the total number of bytes in the buffer.
+	Length() int
+	// Slices iterates over the slices of the buffer. The view byte slice must NOT be saved as the
+	// memory is owned by the Envoy. To take a copy of the buffer, use the Copy method.
+	Slices(iter func(view []byte))
+	// Copy returns a copy of the bytes in the buffer as a single contiguous buffer.
+	Copy() []byte
+}
 
 // HttpFilter is an interface that represents a single http filter in the Envoy filter chain.
 // It is used to create HttpFilterInstance(s) that correspond to each Http request.
@@ -107,7 +144,7 @@ type HttpFilterInstance interface {
 	// EventHttpRequestBody is called when request body data is received.
 	// The function should return the status of the operation.
 	//
-	//  * `requestBody` is the pointer to the request body buffer.
+	//  * `requestBody` is the pointer to the newly arrived request body buffer.
 	//  * `endOfStream` is a boolean that indicates if this is the last data frame.
 	EventHttpRequestBody(RequestBodyBuffer, bool) EventHttpRequestBodyStatus
 	// EventHttpResponseHeaders is called when response headers are received.
@@ -119,7 +156,7 @@ type HttpFilterInstance interface {
 	// EventHttpResponseBody is called when response body data is received.
 	// The function should return the status of the operation.
 	//
-	//  * `responseBody` is the pointer to the response body buffer.
+	//  * `responseBody` is the pointer to the newly arrived response body buffer.
 	//  * `endOfStream` is a boolean that indicates if this is the last data frame.
 	EventHttpResponseBody(ResponseBodyBuffer, bool) EventHttpResponseBodyStatus
 

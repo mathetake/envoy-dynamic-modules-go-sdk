@@ -290,7 +290,7 @@ __envoy_dynamic_module_v1_event_http_filter_instance_request_headers(
     __envoy_dynamic_module_v1_type_EndOfStream end_of_stream);
 
 // __envoy_dynamic_module_v1_event_http_filter_instance_request_body is called when request body
-// data is received.
+// data is received. buffer only contains the data for the current event.
 __envoy_dynamic_module_v1_type_EventHttpRequestBodyStatus
 __envoy_dynamic_module_v1_event_http_filter_instance_request_body(
     __envoy_dynamic_module_v1_type_HttpFilterInstancePtr http_filter_instance_ptr,
@@ -306,7 +306,7 @@ __envoy_dynamic_module_v1_event_http_filter_instance_response_headers(
     __envoy_dynamic_module_v1_type_EndOfStream end_of_stream);
 
 // __envoy_dynamic_module_v1_event_http_filter_instance_response_body is called when response body
-// data is received.
+// data is received. buffer only contains the data for the current event.
 __envoy_dynamic_module_v1_type_EventHttpResponseBodyStatus
 __envoy_dynamic_module_v1_event_http_filter_instance_response_body(
     __envoy_dynamic_module_v1_type_HttpFilterInstancePtr http_filter_instance_ptr,
@@ -419,6 +419,18 @@ void __envoy_dynamic_module_v1_http_set_response_header(
 
 // ---------------- Buffer API ----------------
 
+// __envoy_dynamic_module_v1_http_get_request_body_buffer is called by the module to get the entire
+// request body buffer. The function returns the buffer if available, otherwise nullptr.
+__envoy_dynamic_module_v1_type_HttpRequestBodyBufferPtr
+__envoy_dynamic_module_v1_http_get_request_body_buffer(
+    __envoy_dynamic_module_v1_type_EnvoyFilterInstancePtr envoy_filter_instance_ptr);
+
+// __envoy_dynamic_module_v1_http_get_response_body_buffer is called by the module to get the entire
+// response body buffer. The function returns the buffer if available, otherwise nullptr.
+__envoy_dynamic_module_v1_type_HttpResponseBodyBufferPtr
+__envoy_dynamic_module_v1_http_get_response_body_buffer(
+    __envoy_dynamic_module_v1_type_EnvoyFilterInstancePtr envoy_filter_instance_ptr);
+
 // __envoy_dynamic_module_v1_http_get_request_body_buffer_length is called by the module to get the
 // length (number of bytes) of the request body buffer. The function returns the length of the
 // buffer.
@@ -439,30 +451,36 @@ void __envoy_dynamic_module_v1_http_get_request_body_buffer_slice(
     __envoy_dynamic_module_v1_type_DataSlicePtrResult result_buffer_ptr,
     __envoy_dynamic_module_v1_type_DataSliceLengthResult result_buffer_length_ptr);
 
-// __envoy_dynamic_module_v1_http_get_request_body_buffer_append is called by the module to append
+// __envoy_dynamic_module_v1_http_copy_out_request_body_buffer is called by the module to copy
+// `length` bytes from the request body buffer starting from `offset` to the `result_buffer_ptr`.
+void __envoy_dynamic_module_v1_http_copy_out_request_body_buffer(
+    __envoy_dynamic_module_v1_type_HttpRequestBodyBufferPtr buffer, size_t offset, size_t length,
+    __envoy_dynamic_module_v1_type_InModuleBufferPtr result_buffer_ptr);
+
+// __envoy_dynamic_module_v1_http_append_request_body_buffer is called by the module to append
 // data to the request body buffer. The function appends data to the end of the buffer.
 //
 // After calling this function, the previously returned slices may be invalidated.
-void __envoy_dynamic_module_v1_http_get_request_body_buffer_append(
+void __envoy_dynamic_module_v1_http_append_request_body_buffer(
     __envoy_dynamic_module_v1_type_HttpRequestBodyBufferPtr buffer,
     __envoy_dynamic_module_v1_type_InModuleBufferPtr data,
     __envoy_dynamic_module_v1_type_InModuleBufferLength data_length);
 
-// __envoy_dynamic_module_v1_http_get_request_body_buffer_prepend is called by the module to prepend
+// __envoy_dynamic_module_v1_http_prepend_request_body_buffer is called by the module to prepend
 // data to the request body buffer. The function prepends data to the beginning of the buffer.
 //
 // After calling this function, the previously returned slices may be invalidated.
-void __envoy_dynamic_module_v1_http_get_request_body_buffer_prepend(
+void __envoy_dynamic_module_v1_http_prepend_request_body_buffer(
     __envoy_dynamic_module_v1_type_HttpRequestBodyBufferPtr buffer,
     __envoy_dynamic_module_v1_type_InModuleBufferPtr data,
     __envoy_dynamic_module_v1_type_InModuleBufferLength data_length);
 
-// __envoy_dynamic_module_v1_http_get_request_body_buffer_drain is called by the module to drain
+// __envoy_dynamic_module_v1_http_drain_request_body_buffer is called by the module to drain
 // data from the request body buffer. The function drains length bytes from the beginning of the
 // buffer.
 //
 // After calling this function, the previously returned slices may be invalidated.
-void __envoy_dynamic_module_v1_http_get_request_body_buffer_drain(
+void __envoy_dynamic_module_v1_http_drain_request_body_buffer(
     __envoy_dynamic_module_v1_type_HttpRequestBodyBufferPtr buffer, size_t length);
 
 // __envoy_dynamic_module_v1_http_get_response_body_buffer_length is called by the module to get the
@@ -485,31 +503,37 @@ void __envoy_dynamic_module_v1_http_get_response_body_buffer_slice(
     __envoy_dynamic_module_v1_type_DataSlicePtrResult result_buffer_ptr,
     __envoy_dynamic_module_v1_type_DataSliceLengthResult result_buffer_length_ptr);
 
-// __envoy_dynamic_module_v1_http_get_response_body_buffer_append is called by the module to append
+// __envoy_dynamic_module_v1_http_copy_out_response_body_buffer is called by the module to copy
+// `length` bytes from the response body buffer starting from `offset` to the `result_buffer_ptr`.
+void __envoy_dynamic_module_v1_http_copy_out_response_body_buffer(
+    __envoy_dynamic_module_v1_type_HttpResponseBodyBufferPtr buffer, size_t offset, size_t length,
+    __envoy_dynamic_module_v1_type_InModuleBufferPtr result_buffer_ptr);
+
+// __envoy_dynamic_module_v1_http_append_response_body_buffer is called by the module to append
 // data to the response body buffer. The function appends data to the end of the buffer.
 //
 // After calling this function, the previously returned slices may be invalidated.
-void __envoy_dynamic_module_v1_http_get_response_body_buffer_append(
+void __envoy_dynamic_module_v1_http_append_response_body_buffer(
     __envoy_dynamic_module_v1_type_HttpResponseBodyBufferPtr buffer,
     __envoy_dynamic_module_v1_type_InModuleBufferPtr data,
     __envoy_dynamic_module_v1_type_InModuleBufferLength data_length);
 
-// __envoy_dynamic_module_v1_http_get_response_body_buffer_prepend is called by the module to
+// __envoy_dynamic_module_v1_http_prepend_response_body_buffer is called by the module to
 // prepend data to the response body buffer. The function prepends data to the beginning of the
 // buffer.
 //
 // After calling this function, the previously returned slices may be invalidated.
-void __envoy_dynamic_module_v1_http_get_response_body_buffer_prepend(
+void __envoy_dynamic_module_v1_http_prepend_response_body_buffer(
     __envoy_dynamic_module_v1_type_HttpResponseBodyBufferPtr buffer,
     __envoy_dynamic_module_v1_type_InModuleBufferPtr data,
     __envoy_dynamic_module_v1_type_InModuleBufferLength data_length);
 
-// __envoy_dynamic_module_v1_http_get_response_body_buffer_drain is called by the module to drain
+// __envoy_dynamic_module_v1_http_drain_response_body_buffer is called by the module to drain
 // data from the response body buffer. The function drains length bytes from the beginning of the
 // buffer.
 //
 // After calling this function, the previously returned slices may be invalidated.
-void __envoy_dynamic_module_v1_http_get_response_body_buffer_drain(
+void __envoy_dynamic_module_v1_http_drain_response_body_buffer(
     __envoy_dynamic_module_v1_type_HttpResponseBodyBufferPtr buffer, size_t length);
 
 // __envoy_dynamic_module_v1_http_continue_request is called by the module to continue processing
