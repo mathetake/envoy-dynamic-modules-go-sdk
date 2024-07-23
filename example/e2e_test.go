@@ -195,7 +195,6 @@ func TestDelayFilter(t *testing.T) {
 func TestHelloWorld(t *testing.T) {
 	ensureE2ESetup(t)
 
-	// Make a request to the envoy proxy.
 	require.Eventually(t, func() bool {
 		req, err := http.NewRequest("GET", "http://localhost:15000", bytes.NewBufferString("hello"))
 		if err != nil {
@@ -235,7 +234,6 @@ func TestBodies(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}
 
-	// Make a request to the envoy proxy.
 	require.Eventually(t, func() bool {
 		req, err := http.NewRequest("GET", "http://localhost:15003", bytes.NewBufferString("0123456789"))
 		if err != nil {
@@ -273,6 +271,104 @@ func TestBodies(t *testing.T) {
 		"response body read 2 bytes offset at 8: \"bo\"",
 		"response body read 2 bytes offset at 10: \"dy\"",
 	)
+}
+
+func TestBodiesReplace(t *testing.T) {
+	ensureE2ESetup(t)
+
+	testUpstreamHandler["bodies_replace"] = func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		body, err := io.ReadAll(r.Body)
+		require.NoError(t, err)
+		expRequestBody := r.Header.Get("exp-request-body")
+		require.Equal(t, expRequestBody, string(body))
+
+		if append := r.Header.Get("response-append"); append != "" {
+			w.Header().Set("append", append)
+		}
+		if prepend := r.Header.Get("response-prepend"); prepend != "" {
+			w.Header().Set("prepend", prepend)
+		}
+		if replace := r.Header.Get("response-replace"); replace != "" {
+			w.Header().Set("replace", replace)
+		}
+		w.Header().Set("Content-Type", "text/plain")
+		_, err = w.Write([]byte("[upstream body]"))
+		require.NoError(t, err)
+		w.WriteHeader(http.StatusOK)
+	}
+
+	cases := []struct {
+		requestAppend, requestPrepend, requestReplace    string
+		responseAppend, responsePrepend, responseReplace string
+		expRequestBody, expResponseBody                  string
+	}{
+		{
+			requestAppend: "AAAAAA", expRequestBody: "[downstream body]AAAAAA",
+			responseAppend: "BBBBBB", expResponseBody: "[upstream body]BBBBBB",
+		},
+		{
+			requestPrepend: "AAAAAA", expRequestBody: "AAAAAA[downstream body]",
+			responsePrepend: "BBBBBB", expResponseBody: "BBBBBB[upstream body]",
+		},
+		{
+			requestReplace: "AAAAAA", expRequestBody: "AAAAAA",
+			responseReplace: "BBBBBB", expResponseBody: "BBBBBB",
+		},
+		{
+			requestAppend: "AAAAAA", requestPrepend: "BBBBBB", expRequestBody: "BBBBBB[downstream body]AAAAAA",
+			responseAppend: "CCCCC", responsePrepend: "DDDDD", expResponseBody: "DDDDD[upstream body]CCCCC",
+		},
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(len(cases))
+	for _, tc := range cases {
+		tc := tc
+		go func() {
+			defer wg.Done()
+			require.Eventually(t, func() bool {
+				req, err := http.NewRequest("GET", "http://localhost:15004", bytes.NewBufferString("[downstream body]"))
+				if err != nil {
+					return false
+				}
+				req.Header.Set("go-sdk-test-case", "bodies_replace")
+
+				if tc.requestAppend != "" {
+					req.Header.Set("append", tc.requestAppend)
+				}
+				if tc.requestPrepend != "" {
+					req.Header.Set("prepend", tc.requestPrepend)
+				}
+				if tc.requestReplace != "" {
+					req.Header.Set("replace", tc.requestReplace)
+				}
+				if tc.responseAppend != "" {
+					req.Header.Set("response-append", tc.responseAppend)
+				}
+				if tc.responsePrepend != "" {
+					req.Header.Set("response-prepend", tc.responsePrepend)
+				}
+				if tc.responseReplace != "" {
+					req.Header.Set("response-replace", tc.responseReplace)
+				}
+				req.Header.Set("exp-request-body", tc.expRequestBody)
+				res, err := http.DefaultClient.Do(req)
+				if err != nil {
+					return false
+				}
+				defer res.Body.Close()
+
+				resBody, err := io.ReadAll(res.Body)
+				if err != nil {
+					return false
+				}
+				require.Equal(t, tc.expResponseBody, string(resBody))
+				return res.StatusCode == http.StatusOK
+			}, 5*time.Second, 100*time.Millisecond, "Envoy has not started: %s", stdOut.String())
+		}()
+	}
+	wg.Wait()
 }
 
 func requireEventuallyContainsMessages(t *testing.T, buf *bytes.Buffer, messages ...string) {

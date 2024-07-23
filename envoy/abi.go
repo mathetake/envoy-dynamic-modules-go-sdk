@@ -175,7 +175,28 @@ var (
 )
 
 // Get implements RequestHeaders.
-func (r requestHeadersC) Get(key string, iter func(value HeaderValue)) {
+func (r requestHeadersC) Get(key string) (HeaderValue, bool) {
+	// Take the raw pointer to the key by using unsafe.
+	keyPtr := uintptr(unsafe.Pointer(unsafe.StringData(key)))
+	keySize := len(key)
+
+	var resultPtr *byte
+	var resultSize int
+	total := C.__envoy_dynamic_module_v1_http_get_request_header_value(r.raw,
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(keyPtr),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(keySize),
+		C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&resultPtr))),
+		C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&resultSize))),
+	)
+	if total == 0 {
+		return HeaderValue{}, false
+	}
+	runtime.KeepAlive(key)
+	return HeaderValue{data: resultPtr, size: int(resultSize)}, true
+}
+
+// Values implements RequestHeaders.
+func (r requestHeadersC) Values(key string, iter func(value HeaderValue)) {
 	// Take the raw pointer to the key by using unsafe.
 	keyPtr := uintptr(unsafe.Pointer(unsafe.StringData(key)))
 	keySize := len(key)
@@ -232,8 +253,29 @@ func (r requestHeadersC) set(keyPtr uintptr, keySize int, valuePtr uintptr, valu
 	)
 }
 
-// Get implements ResponseHeaders.
-func (r responseHeadersC) Get(key string, iter func(value HeaderValue)) {
+// Values implements ResponseHeaders.
+func (r responseHeadersC) Get(key string) (HeaderValue, bool) {
+	// Take the raw pointer to the key by using unsafe.
+	keyPtr := uintptr(unsafe.Pointer(unsafe.StringData(key)))
+	keySize := len(key)
+
+	var resultPtr *byte
+	var resultSize int
+	total := C.__envoy_dynamic_module_v1_http_get_response_header_value(r.raw,
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(keyPtr),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(keySize),
+		C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&resultPtr))),
+		C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&resultSize))),
+	)
+	if total == 0 {
+		return HeaderValue{}, false
+	}
+	runtime.KeepAlive(key)
+	return HeaderValue{data: resultPtr, size: resultSize}, true
+}
+
+// Values implements ResponseHeaders.
+func (r responseHeadersC) Values(key string, iter func(value HeaderValue)) {
 	// Take the raw pointer to the key by using unsafe.
 	keyPtr := uintptr(unsafe.Pointer(unsafe.StringData(key)))
 	keySize := len(key)
@@ -387,4 +429,66 @@ func (r responseBodyBufferC) ReadAt(p []byte, off int64) (n int, err error) {
 		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(uintptr(unsafe.Pointer(&p[0]))),
 	)
 	return len(p), err
+}
+
+// Append implements RequestBodyBuffer.
+func (r requestBodyBufferC) Append(data []byte) {
+	C.__envoy_dynamic_module_v1_http_append_request_body_buffer(
+		r.raw,
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(uintptr(unsafe.Pointer(&data[0]))),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(len(data)),
+	)
+	runtime.KeepAlive(data)
+}
+
+// Prepend implements RequestBodyBuffer.
+func (r requestBodyBufferC) Prepend(data []byte) {
+	C.__envoy_dynamic_module_v1_http_prepend_request_body_buffer(
+		r.raw,
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(uintptr(unsafe.Pointer(&data[0]))),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(len(data)),
+	)
+	runtime.KeepAlive(data)
+
+}
+
+// Drain implements RequestBodyBuffer.
+func (r requestBodyBufferC) Drain(length int) {
+	C.__envoy_dynamic_module_v1_http_drain_request_body_buffer(r.raw, C.size_t(length))
+}
+
+func (r requestBodyBufferC) Replace(data []byte) {
+	r.Drain(r.Length())
+	r.Append(data)
+}
+
+// Append implements ResponseBodyBuffer.
+func (r responseBodyBufferC) Append(data []byte) {
+	C.__envoy_dynamic_module_v1_http_append_response_body_buffer(
+		r.raw,
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(uintptr(unsafe.Pointer(&data[0]))),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(len(data)),
+	)
+	runtime.KeepAlive(data)
+}
+
+// Prepend implements ResponseBodyBuffer.
+func (r responseBodyBufferC) Prepend(data []byte) {
+	C.__envoy_dynamic_module_v1_http_prepend_response_body_buffer(
+		r.raw,
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(uintptr(unsafe.Pointer(&data[0]))),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(len(data)),
+	)
+	runtime.KeepAlive(data)
+}
+
+// Drain implements ResponseBodyBuffer.
+func (r responseBodyBufferC) Drain(length int) {
+	C.__envoy_dynamic_module_v1_http_drain_response_body_buffer(r.raw, C.size_t(length))
+}
+
+// Replace implements ResponseBodyBuffer.
+func (r responseBodyBufferC) Replace(data []byte) {
+	r.Drain(r.Length())
+	r.Append(data)
 }

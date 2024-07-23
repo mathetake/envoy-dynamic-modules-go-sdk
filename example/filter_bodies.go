@@ -9,7 +9,7 @@ import (
 
 // bodiesHttpFilter implements envoy.HttpFilter.
 //
-// This is to demonstrate how to use header manipulation APIs.
+// This is to demonstrate how to use body manipulation APIs.
 type bodiesHttpFilter struct{}
 
 func newbodiesHttpFilter(string) envoy.HttpFilter { return &bodiesHttpFilter{} }

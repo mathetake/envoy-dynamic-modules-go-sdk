@@ -9,6 +9,8 @@ import (
 )
 
 // delayHttpFilter implements envoy.HttpFilter.
+//
+// This is to demonstrate how to delay the request and response by using Gorooutines.
 type delayHttpFilter struct{ requestCounts atomic.Int32 }
 
 func newDelayHttpFilter(string) envoy.HttpFilter { return &delayHttpFilter{} }

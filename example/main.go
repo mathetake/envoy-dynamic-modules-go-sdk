@@ -22,6 +22,8 @@ func newHttpFilter(config string) envoy.HttpFilter {
 		return newHeadersHttpFilter(config)
 	case "bodies":
 		return newbodiesHttpFilter(config)
+	case "bodies_replace":
+		return newbodiesReplaceHttpFilter(config)
 	default:
 		panic("unknown filter: " + config)
 	}
