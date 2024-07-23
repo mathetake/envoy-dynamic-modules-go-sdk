@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -215,6 +216,61 @@ func TestHelloWorld(t *testing.T) {
 		"helloWorldHttpFilterInstance.EventHttpResponseHeaders called",
 		"helloWorldHttpFilterInstance.EventHttpResponseBody called",
 		"helloWorldHttpFilterInstance.EventHttpDestroy called",
+	)
+}
+
+func TestBodies(t *testing.T) {
+	ensureE2ESetup(t)
+
+	testUpstreamHandler["bodies"] = func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		body, err := io.ReadAll(r.Body)
+		require.NoError(t, err)
+		require.Equal(t, "XXXXXXXXXX", string(body)) // Request body should be replaced with 'X'.
+
+		w.Header().Set("Content-Type", "text/plain")
+		_, err = w.Write([]byte("example body\n"))
+		require.NoError(t, err)
+		w.WriteHeader(http.StatusOK)
+	}
+
+	// Make a request to the envoy proxy.
+	require.Eventually(t, func() bool {
+		req, err := http.NewRequest("GET", "http://localhost:15003", bytes.NewBufferString("0123456789"))
+		if err != nil {
+			return false
+		}
+		req.Header.Set("go-sdk-test-case", "bodies")
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return false
+		}
+		defer res.Body.Close()
+
+		resBody, err := io.ReadAll(res.Body)
+		if err != nil {
+			return false
+		}
+		require.Equal(t, "YYYYYYYYYYYYY", string(resBody))
+		return res.StatusCode == http.StatusOK
+	}, 5*time.Second, 100*time.Millisecond, "Envoy has not started: %s", stdOut.String())
+
+	// Check if the log contains the expected output.
+	requireEventuallyContainsMessages(t, stdOut,
+		"entire request body: 0123456789",
+		"request body read 2 bytes offset at 0: \"01\"",
+		"request body read 2 bytes offset at 2: \"23\"",
+		"request body read 2 bytes offset at 4: \"45\"",
+		"request body read 2 bytes offset at 6: \"67\"",
+		"request body read 2 bytes offset at 8: \"89\"",
+
+		"entire response body: example body",
+		"response body read 2 bytes offset at 0: \"ex\"",
+		"response body read 2 bytes offset at 2: \"am\"",
+		"response body read 2 bytes offset at 4: \"pl\"",
+		"response body read 2 bytes offset at 6: \"e \"",
+		"response body read 2 bytes offset at 8: \"bo\"",
+		"response body read 2 bytes offset at 10: \"dy\"",
 	)
 }
 

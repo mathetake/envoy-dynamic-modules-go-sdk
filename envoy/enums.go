@@ -38,7 +38,7 @@ const (
 	// This stops sending body data to the upstream, so if the module wants to continue sending body
 	// data, it should call EnvoyFilterInstance.ContinueRequest or return continue status in the
 	// subsequent HttpFilterInstance.EventHttpRequestBody calls.
-	EventHttpRequestBodyStatusStopIterationAndBuffer EventHttpRequestBodyStatus = 3
+	EventHttpRequestBodyStatusStopIterationAndBuffer EventHttpRequestBodyStatus = 1
 )
 
 // EventHttpResponseHeadersStatus is the return value of the HttpFilterInstance.EventHttpResponseHeaders event.

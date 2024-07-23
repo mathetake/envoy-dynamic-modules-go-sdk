@@ -20,6 +20,8 @@ func newHttpFilter(config string) envoy.HttpFilter {
 		return newDelayHttpFilter(config)
 	case "headers":
 		return newHeadersHttpFilter(config)
+	case "bodies":
+		return newbodiesHttpFilter(config)
 	default:
 		panic("unknown filter: " + config)
 	}
