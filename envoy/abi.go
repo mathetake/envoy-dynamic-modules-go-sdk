@@ -7,6 +7,7 @@ package envoy
 */
 import "C"
 import (
+	"runtime"
 	"unsafe"
 )
 
@@ -39,7 +40,7 @@ func __envoy_dynamic_module_v1_event_http_filter_destroy(
 
 //export __envoy_dynamic_module_v1_event_http_filter_instance_init
 func __envoy_dynamic_module_v1_event_http_filter_instance_init(
-	envoyFilterPtr C.__envoy_dynamic_module_v1_type_EnvoyFilterInstanceInstancePtr,
+	envoyFilterPtr C.__envoy_dynamic_module_v1_type_EnvoyFilterInstancePtr,
 	moduleCtx C.__envoy_dynamic_module_v1_type_HttpFilterPtr,
 ) C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr {
 	envoyPtr := &envoyFilterC{raw: envoyFilterPtr}
@@ -108,11 +109,13 @@ func __envoy_dynamic_module_v1_event_http_filter_instance_destroy(
 	memManager.unpinHttpFilterInstance((*pinedHttpFilterInstance)(unsafe.Pointer(uintptr(httpFilterInstancePtr))))
 }
 
+// envoyFilterC implements the EnvoyFilterInstance.
 type envoyFilterC struct {
-	raw       C.__envoy_dynamic_module_v1_type_EnvoyFilterInstanceInstancePtr
+	raw       C.__envoy_dynamic_module_v1_type_EnvoyFilterInstancePtr
 	destroyed bool
 }
 
+// ContinueRequest implements EnvoyFilterInstance.
 func (c *envoyFilterC) ContinueRequest() {
 	if c.destroyed {
 		return
@@ -120,6 +123,7 @@ func (c *envoyFilterC) ContinueRequest() {
 	C.__envoy_dynamic_module_v1_http_continue_request(c.raw)
 }
 
+// ContinueResponse implements EnvoyFilterInstance.
 func (c *envoyFilterC) ContinueResponse() {
 	if c.destroyed {
 		return
@@ -127,22 +131,115 @@ func (c *envoyFilterC) ContinueResponse() {
 	C.__envoy_dynamic_module_v1_http_continue_response(c.raw)
 }
 
+// Destroyed implements EnvoyFilterInstance.
 func (c *envoyFilterC) Destroyed() bool {
 	return c.destroyed
 }
 
+// requestHeadersC implements RequestHeaders.
 type requestHeadersC struct {
 	raw C.__envoy_dynamic_module_v1_type_HttpRequestHeadersMapPtr
 }
 
+// responseHeadersC implements ResponseHeaders.
 type responseHeadersC struct {
 	raw C.__envoy_dynamic_module_v1_type_HttpResponseHeaderMapPtr
 }
 
+// requestBodyBufferC implements RequestBodyBuffer.
 type requestBodyBufferC struct {
 	raw C.__envoy_dynamic_module_v1_type_HttpRequestBodyBufferPtr
 }
 
+// responseBodyBufferC implements ResponseBodyBuffer.
 type responseBodyBufferC struct {
 	raw C.__envoy_dynamic_module_v1_type_HttpResponseBodyBufferPtr
 }
+
+var (
+	_ RequestHeaders     = (*requestHeadersC)(nil)
+	_ ResponseHeaders    = (*responseHeadersC)(nil)
+	_ RequestBodyBuffer  = (*requestBodyBufferC)(nil)
+	_ ResponseBodyBuffer = (*responseBodyBufferC)(nil)
+)
+
+// Get implements RequestHeaders.
+func (r requestHeadersC) Get(key string, iter func(value HeaderValue)) {
+	// Take the raw pointer to the key by using unsafe.
+	keyPtr := uintptr(unsafe.Pointer(unsafe.StringData(key)))
+	keySize := len(key)
+
+	var resultPtr *byte
+	var resultSize int
+	total := C.__envoy_dynamic_module_v1_http_get_request_header_value(r.raw,
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(keyPtr),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(keySize),
+		C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&resultPtr))),
+		C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&resultSize))),
+	)
+	if total == 0 {
+		return
+	}
+
+	// Reinterpret the result as a Go string.
+	iter(HeaderValue{data: resultPtr, size: int(resultSize)})
+
+	for i := 1; i < int(total); i++ {
+		C.__envoy_dynamic_module_v1_http_get_request_header_value_nth(r.raw,
+			C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(keyPtr),
+			C.__envoy_dynamic_module_v1_type_InModuleBufferLength(keySize),
+			C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&resultPtr))),
+			C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&resultSize))),
+			C.size_t(i),
+		)
+		iter(HeaderValue{data: resultPtr, size: int(resultSize)})
+	}
+	runtime.KeepAlive(key)
+}
+
+// Set implements RequestHeaders.
+func (r requestHeadersC) Set(key, value string) {}
+
+// Remove implements RequestHeaders.
+func (r requestHeadersC) Remove(key string) {}
+
+// Get implements ResponseHeaders.
+func (r responseHeadersC) Get(key string, iter func(value HeaderValue)) {
+	// Take the raw pointer to the key by using unsafe.
+	keyPtr := uintptr(unsafe.Pointer(unsafe.StringData(key)))
+	keySize := len(key)
+
+	var resultPtr *byte
+	var resultSize int
+	total := C.__envoy_dynamic_module_v1_http_get_response_header_value(r.raw,
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(keyPtr),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(keySize),
+		C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&resultPtr))),
+		C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&resultSize))),
+	)
+	if total == 0 {
+		return
+	}
+
+	// Reinterpret the result as a Go string.
+	iter(HeaderValue{data: resultPtr, size: resultSize})
+
+	for i := 1; i < int(total); i++ {
+		C.__envoy_dynamic_module_v1_http_get_response_header_value_nth(r.raw,
+			C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(keyPtr),
+			C.__envoy_dynamic_module_v1_type_InModuleBufferLength(keySize),
+			C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&resultPtr))),
+			C.__envoy_dynamic_module_v1_type_DataSliceLengthResult(uintptr(unsafe.Pointer(&resultSize))),
+			C.size_t(i),
+		)
+		iter(HeaderValue{data: resultPtr, size: resultSize})
+	}
+
+	runtime.KeepAlive(key)
+}
+
+// Set implements ResponseHeaders.
+func (r responseHeadersC) Set(key, value string) {}
+
+// Remove implements ResponseHeaders.
+func (r responseHeadersC) Remove(key string) {}
