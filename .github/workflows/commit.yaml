@@ -38,6 +38,9 @@ jobs:
         - v1.31-latest-envoyx-main
         - v1.30-latest-envoyx-main
         - v1.29-latest-envoyx-main
+        - v1.31-latest-envoyx-v1.0.0
+        - v1.30-latest-envoyx-v1.0.0
+        - v1.29-latest-envoyx-v1.0.0
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
