@@ -47,6 +47,38 @@ func ensureEnvoy(t *testing.T) {
 	})
 }
 
+func TestHeaders(t *testing.T) {
+	ensureEnvoy(t)
+	require.Eventually(t, func() bool {
+		req, err := http.NewRequest("GET", "http://localhost:15002", bytes.NewBufferString("hello"))
+		if err != nil {
+			return false
+		}
+
+		//  -H 'foo: value' -H 'multiple-values: 1234' -H 'multiple-values: next'
+		req.Header.Set("foo", "value")
+		req.Header.Add("multiple-values", "1234")
+		req.Header.Add("multiple-values", "next")
+
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return false
+		}
+		defer res.Body.Close()
+		return res.StatusCode == http.StatusOK
+	}, 10*time.Second, 2*time.Second, "Envoy has not started: %s", stdOut.String())
+
+	// Check if the log contains the expected output.
+	requireEventuallyContainsMessages(t, stdOut,
+		"foo: value",
+		"multiple-values: 1234",
+		"multiple-values: next",
+		"this-is: response-header",
+		"this-is-2: A",
+		"this-is-2: B",
+	)
+}
+
 func TestDelayFilter(t *testing.T) {
 	ensureEnvoy(t)
 

@@ -1,5 +1,7 @@
 package envoy
 
+import "unsafe"
+
 // NewHttpFilter is a function that creates a new HttpFilter that corresponds to a filter in the Envoy filter chain.
 // This is a global variable that should be set in the init function in the program once.
 //
@@ -22,11 +24,44 @@ type EnvoyFilterInstance interface {
 
 // RequestHeaders is an opaque object that represents the underlying Envoy Http request headers map.
 // This is used to interact with it from the module code.
-type RequestHeaders interface{}
+type RequestHeaders interface {
+	// Get iterates over the header values for the given key.
+	// Usually, there is only one value for a key, but in general, multiple values are possible.
+	Get(key string, iter func(value HeaderValue))
+	// Set sets the value for the given key. If multiple values are set for the same key,
+	// this removes all the previous values and sets the new single value.
+	Set(key, value string)
+	// Remove removes the value for the given key. If multiple values are set for the same key,
+	// this removes all the values.
+	Remove(key string)
+}
 
 // ResponseHeadersMap is an opaque object that represents the underlying Envoy Http response headers map.
 // This is used to interact with it from the module code.
-type ResponseHeaders interface{}
+type ResponseHeaders interface {
+	// Get iterates over the header values for the given key.
+	// Usually, there is only one value for a key, but in general, multiple values are possible.
+	Get(key string, iter func(value HeaderValue))
+	// Set sets the value for the given key. If multiple values are set for the same key,
+	// this removes all the previous values and sets the new single value.
+	Set(key, value string)
+	// Remove removes the value for the given key. If multiple values are set for the same key,
+	// this removes all the values.
+	Remove(key string)
+}
+
+// HeaderValue represents a single header value whose data is owned by the Envoy.
+type HeaderValue struct {
+	data *byte
+	size int
+}
+
+// String returns the string representation of the header value.
+// This copies the underlying data to a new buffer and returns the string.
+func (h HeaderValue) String() string {
+	view := unsafe.Slice(h.data, h.size)
+	return string(view)
+}
 
 // RequestBodyBuffer is an opaque object that represents the underlying Envoy Http request body buffer.
 // This is used to interact with it from the module code.
