@@ -33,9 +33,11 @@ type EnvoyFilterInstance interface {
 // RequestHeaders is an opaque object that represents the underlying Envoy Http request headers map.
 // This is used to interact with it from the module code.
 type RequestHeaders interface {
-	// Get iterates over the header values for the given key.
-	// Usually, there is only one value for a key, but in general, multiple values are possible.
-	Get(key string, iter func(value HeaderValue))
+	// Get returns the first header value for the given key. To handle multiple values, use the Values method.
+	// Returns true at the second return value if the key exists.
+	Get(key string) (HeaderValue, bool)
+	// Values iterates over the header values for the given key.
+	Values(key string, iter func(value HeaderValue))
 	// Set sets the value for the given key. If multiple values are set for the same key,
 	// this removes all the previous values and sets the new single value.
 	Set(key, value string)
@@ -47,9 +49,11 @@ type RequestHeaders interface {
 // ResponseHeadersMap is an opaque object that represents the underlying Envoy Http response headers map.
 // This is used to interact with it from the module code.
 type ResponseHeaders interface {
-	// Get iterates over the header values for the given key.
-	// Usually, there is only one value for a key, but in general, multiple values are possible.
-	Get(key string, iter func(value HeaderValue))
+	// Get returns the first header value for the given key. To handle multiple values, use the Values method.
+	// Returns true at the second return value if the key exists.
+	Get(key string) (HeaderValue, bool)
+	// Values iterates over the header values for the given key.
+	Values(key string, iter func(value HeaderValue))
 	// Set sets the value for the given key. If multiple values are set for the same key,
 	// this removes all the previous values and sets the new single value.
 	Set(key, value string)
@@ -59,6 +63,8 @@ type ResponseHeaders interface {
 }
 
 // HeaderValue represents a single header value whose data is owned by the Envoy.
+//
+// This is a view of the underlying data and doesn't copy the data.
 type HeaderValue struct {
 	data *byte
 	size int
@@ -72,7 +78,12 @@ func (h HeaderValue) String() string {
 }
 
 // Equal returns true if the header value is equal to the given string.
+//
+// This doesn't copy the data and compares the data directly.
 func (h HeaderValue) Equal(str string) bool {
+	if h.size != len(str) || h.data == nil {
+		return false
+	}
 	v := unsafe.String(h.data, h.size)
 	return v == str
 }
@@ -94,6 +105,15 @@ type RequestBodyBuffer interface {
 	Slices(iter func(view []byte))
 	// Copy returns a copy of the bytes in the buffer as a single contiguous buffer.
 	Copy() []byte
+	// Append appends the data to the buffer.
+	Append(data []byte)
+	// Prepend prepends the data to the buffer.
+	Prepend(data []byte)
+	// Drain removes the given number of bytes from the front of the buffer.
+	Drain(length int)
+	// Replace replaces the buffer with the given data. This doesn't take the ownership of the data.
+	// Therefore, data will be copied to the buffer internally.
+	Replace(data []byte)
 }
 
 // ResponseBodyBuffer is an opaque object that represents the underlying Envoy Http response body buffer.
@@ -113,6 +133,15 @@ type ResponseBodyBuffer interface {
 	Slices(iter func(view []byte))
 	// Copy returns a copy of the bytes in the buffer as a single contiguous buffer.
 	Copy() []byte
+	// Append appends the data to the buffer.
+	Append(data []byte)
+	// Prepend prepends the data to the buffer.
+	Prepend(data []byte)
+	// Drain removes the given number of bytes from the front of the buffer.
+	Drain(length int)
+	// Replace replaces the buffer with the given data. This doesn't take the ownership of the data.
+	// Therefore, data will be copied to the buffer internally.
+	Replace(data []byte)
 }
 
 // HttpFilter is an interface that represents a single http filter in the Envoy filter chain.

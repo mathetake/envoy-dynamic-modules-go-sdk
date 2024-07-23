@@ -6,6 +6,9 @@ import (
 	"github.com/envoyproxyx/go-sdk/envoy"
 )
 
+// helloWorldFilter implements envoy.HttpFilter.
+//
+// This is to demonstrate how to create a simple http filter.
 type helloWorldFilter struct{}
 
 func newHelloWorldHttpFilter(string) envoy.HttpFilter {
