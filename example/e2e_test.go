@@ -20,10 +20,11 @@ import (
 )
 
 var (
-	setupE2E            = sync.Once{}
-	stdOut              *bytes.Buffer
-	stdErr              *bytes.Buffer
-	stop                func()
+	setupE2E = sync.Once{}
+	stdOut   *bytes.Buffer
+	stdErr   *bytes.Buffer
+	stop     func()
+	// TODO: mutex, but for now, we are just not running tests in parallel.
 	testUpstreamHandler = map[string]http.HandlerFunc{}
 )
 

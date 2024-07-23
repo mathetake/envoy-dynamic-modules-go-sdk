@@ -1,3 +1,4 @@
+// Package envoy provides the Go API for the Envoy filter chains.
 package envoy
 
 import (
@@ -5,7 +6,7 @@ import (
 	"unsafe"
 )
 
-// NewHttpFilter is a function that creates a new HttpFilter that corresponds to a filter in the Envoy filter chain.
+// NewHttpFilter is a function that creates a new HttpFilter that corresponds to each filter configuration in the Envoy filter chain.
 // This is a global variable that should be set in the init function in the program once.
 //
 // The function is called once globally. The function is only called by the main thread,
