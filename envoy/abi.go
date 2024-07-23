@@ -181,7 +181,6 @@ func (r requestHeadersC) Get(key string, iter func(value HeaderValue)) {
 		return
 	}
 
-	// Reinterpret the result as a Go string.
 	iter(HeaderValue{data: resultPtr, size: int(resultSize)})
 
 	for i := 1; i < int(total); i++ {
@@ -198,10 +197,29 @@ func (r requestHeadersC) Get(key string, iter func(value HeaderValue)) {
 }
 
 // Set implements RequestHeaders.
-func (r requestHeadersC) Set(key, value string) {}
+func (r requestHeadersC) Set(key, value string) {
+	r.set(
+		uintptr(unsafe.Pointer(unsafe.StringData(key))), len(key),
+		uintptr(unsafe.Pointer(unsafe.StringData(value))), len(value),
+	)
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
+}
 
 // Remove implements RequestHeaders.
-func (r requestHeadersC) Remove(key string) {}
+func (r requestHeadersC) Remove(key string) {
+	r.set(uintptr(unsafe.Pointer(unsafe.StringData(key))), len(key), 0, 0)
+	runtime.KeepAlive(key)
+}
+
+func (r requestHeadersC) set(keyPtr uintptr, keySize int, valuePtr uintptr, valueSize int) {
+	C.__envoy_dynamic_module_v1_http_set_request_header(r.raw,
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(keyPtr),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(keySize),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(valuePtr),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(valueSize),
+	)
+}
 
 // Get implements ResponseHeaders.
 func (r responseHeadersC) Get(key string, iter func(value HeaderValue)) {
@@ -221,7 +239,6 @@ func (r responseHeadersC) Get(key string, iter func(value HeaderValue)) {
 		return
 	}
 
-	// Reinterpret the result as a Go string.
 	iter(HeaderValue{data: resultPtr, size: resultSize})
 
 	for i := 1; i < int(total); i++ {
@@ -239,7 +256,26 @@ func (r responseHeadersC) Get(key string, iter func(value HeaderValue)) {
 }
 
 // Set implements ResponseHeaders.
-func (r responseHeadersC) Set(key, value string) {}
+func (r responseHeadersC) Set(key, value string) {
+	r.set(
+		uintptr(unsafe.Pointer(unsafe.StringData(key))), len(key),
+		uintptr(unsafe.Pointer(unsafe.StringData(value))), len(value),
+	)
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
+}
 
 // Remove implements ResponseHeaders.
-func (r responseHeadersC) Remove(key string) {}
+func (r responseHeadersC) Remove(key string) {
+	r.set(uintptr(unsafe.Pointer(unsafe.StringData(key))), len(key), 0, 0)
+	runtime.KeepAlive(key)
+}
+
+func (r responseHeadersC) set(keyPtr uintptr, keySize int, valuePtr uintptr, valueSize int) {
+	C.__envoy_dynamic_module_v1_http_set_response_header(r.raw,
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(keyPtr),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(keySize),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(valuePtr),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(valueSize),
+	)
+}

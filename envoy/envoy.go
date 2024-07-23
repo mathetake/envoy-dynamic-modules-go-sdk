@@ -63,6 +63,12 @@ func (h HeaderValue) String() string {
 	return string(view)
 }
 
+// Equal returns true if the header value is equal to the given string.
+func (h HeaderValue) Equal(str string) bool {
+	v := unsafe.String(h.data, h.size)
+	return v == str
+}
+
 // RequestBodyBuffer is an opaque object that represents the underlying Envoy Http request body buffer.
 // This is used to interact with it from the module code.
 type RequestBodyBuffer interface{}

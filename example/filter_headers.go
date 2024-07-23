@@ -2,10 +2,14 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/envoyproxyx/go-sdk/envoy"
 )
 
+// headersHttpFilter implements envoy.HttpFilter.
+//
+// This is to demonstrate how to use header manipulation APIs.
 type headersHttpFilter struct{}
 
 func newHeadersHttpFilter(string) envoy.HttpFilter { return &headersHttpFilter{} }
@@ -23,8 +27,16 @@ type headersHttpFilterInstance struct{}
 
 // EventHttpRequestHeaders implements envoy.HttpFilterInstance.
 func (h *headersHttpFilterInstance) EventHttpRequestHeaders(headers envoy.RequestHeaders, _ bool) envoy.EventHttpRequestHeadersStatus {
-	headers.Get("foo", func(value envoy.HeaderValue) { fmt.Println("foo:", value.String()) })
+	headers.Get("foo", func(value envoy.HeaderValue) {
+		if !value.Equal("value") {
+			log.Fatalf("expected foo to be \"value\", got %s", value.String())
+		}
+		fmt.Println("foo:", value.String())
+	})
 	headers.Get("multiple-values", func(value envoy.HeaderValue) { fmt.Println("multiple-values:", value.String()) })
+	headers.Remove("multiple-values")
+	headers.Set("foo", "yes")
+	headers.Set("multiple-values-to-be-single", "single")
 	return envoy.EventHttpRequestHeadersStatusContinue
 }
 
@@ -35,9 +47,17 @@ func (h *headersHttpFilterInstance) EventHttpRequestBody(envoy.RequestBodyBuffer
 
 // EventHttpResponseHeaders implements envoy.HttpFilterInstance.
 func (h *headersHttpFilterInstance) EventHttpResponseHeaders(headers envoy.ResponseHeaders, _ bool) envoy.EventHttpResponseHeadersStatus {
-	headers.Get("this-is", func(value envoy.HeaderValue) { fmt.Println("this-is:", value.String()) })
+	headers.Get("this-is", func(value envoy.HeaderValue) {
+		if !value.Equal("response-header") {
+			log.Fatalf("expected this-is to be \"response-header\", got %s", value.String())
+		}
+		fmt.Println("this-is:", value.String())
+	})
 	headers.Get("this-is-2", func(value envoy.HeaderValue) { fmt.Println("this-is-2:", value.String()) })
 
+	headers.Set("this-is", "response-header")
+	headers.Remove("this-is-2")
+	headers.Set("multiple-values-res-to-be-single", "single")
 	return envoy.EventHttpResponseHeadersStatusContinue
 }
 

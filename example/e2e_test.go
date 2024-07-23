@@ -4,7 +4,10 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"strings"
@@ -16,16 +19,36 @@ import (
 )
 
 var (
-	setupEnvoy = sync.Once{}
-	stdOut     *bytes.Buffer
-	stdErr     *bytes.Buffer
-	stop       func()
+	setupE2E            = sync.Once{}
+	stdOut              *bytes.Buffer
+	stdErr              *bytes.Buffer
+	stop                func()
+	testUpstreamHandler = map[string]http.HandlerFunc{}
 )
 
-func ensureEnvoy(t *testing.T) {
-	setupEnvoy.Do(func() {
+// ensureE2ESetup ensures that the setup for the end-to-end tests is done only once.
+func ensureE2ESetup(t *testing.T) {
+	setupE2E.Do(func() {
+		// Setup the test upstream server.
+		l, err := net.Listen("tcp", "127.0.0.1:8199")
+		require.NoError(t, err)
+		testUpstream := &httptest.Server{
+			Listener: l,
+			Config: &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				value := r.Header.Get("go-sdk-test-case")
+				hander, ok := testUpstreamHandler[value]
+				if !ok {
+					log.Printf("testUpstreamHandler not found for %s", value)
+					w.WriteHeader(http.StatusNotFound)
+					return
+				}
+				hander(w, r)
+			})},
+		}
+		testUpstream.Start()
+
 		// Check if `envoy` is installed.
-		_, err := exec.LookPath("envoy")
+		_, err = exec.LookPath("envoy")
 		require.NoError(t, err, "envoy binary not found. Please install it from containers at https://github.com/envoyproxyx/envoyx/pkgs/container/envoy")
 
 		// Check if a binary named main exists.
@@ -41,31 +64,67 @@ func ensureEnvoy(t *testing.T) {
 		cmd.Stdout = stdOut
 		cmd.Stderr = stdErr
 		require.NoError(t, cmd.Start())
-		stop = func() { require.NoError(t, cmd.Process.Signal(os.Interrupt)) }
+		stop = func() {
+			testUpstream.Close()
+			require.NoError(t, cmd.Process.Signal(os.Interrupt))
+		}
 		defer fmt.Println(stdOut.String())
 		defer fmt.Println(stdErr.String())
 	})
 }
 
 func TestHeaders(t *testing.T) {
-	ensureEnvoy(t)
+	ensureE2ESetup(t)
+
+	testUpstreamHandler["headers"] = func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "yes", r.Header.Get("foo"))
+		require.Equal(t, "", r.Header.Get("multiple-values"))
+		require.Equal(t, []string{"single"}, r.Header.Values("multiple-values-to-be-single"))
+
+		w.Header().Set("this-is", "response-header")
+		w.Header().Add("this-is-2", "A")
+		w.Header().Add("this-is-2", "B")
+		w.Header().Set("multiple-values2-to-be-single", "A")
+		w.Header().Add("multiple-values2-to-be-single", "B")
+		w.WriteHeader(http.StatusOK)
+	}
+
 	require.Eventually(t, func() bool {
 		req, err := http.NewRequest("GET", "http://localhost:15002", bytes.NewBufferString("hello"))
 		if err != nil {
 			return false
 		}
-
-		//  -H 'foo: value' -H 'multiple-values: 1234' -H 'multiple-values: next'
+		req.Header.Set("go-sdk-test-case", "headers")
 		req.Header.Set("foo", "value")
 		req.Header.Add("multiple-values", "1234")
 		req.Header.Add("multiple-values", "next")
+
+		req.Header.Add("multiple-values2-to-be-single", "A")
+		req.Header.Add("multiple-values2-to-be-single", "B")
 
 		res, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return false
 		}
 		defer res.Body.Close()
-		return res.StatusCode == http.StatusOK
+		if res.StatusCode != http.StatusOK {
+			return false
+		}
+
+		// Check if the response headers are as expected.
+		if res.Header.Get("this-is") != "response-header" {
+			fmt.Println("this-is:", res.Header.Values("this-is"))
+			return false
+		}
+		if res.Header.Values("this-is-2") != nil {
+			fmt.Println("this-is-2:", res.Header.Values("this-is-2"))
+			return false
+		}
+		if toBeSingle := res.Header.Values("multiple-values-res-to-be-single"); len(toBeSingle) != 1 || toBeSingle[0] != "single" {
+			fmt.Println("multiple-values-to-be-single:", toBeSingle)
+			return false
+		}
+		return true
 	}, 10*time.Second, 2*time.Second, "Envoy has not started: %s", stdOut.String())
 
 	// Check if the log contains the expected output.
@@ -80,7 +139,7 @@ func TestHeaders(t *testing.T) {
 }
 
 func TestDelayFilter(t *testing.T) {
-	ensureEnvoy(t)
+	ensureE2ESetup(t)
 
 	// Make four requests to the envoy proxy.
 	wg := new(sync.WaitGroup)
@@ -132,7 +191,7 @@ func TestDelayFilter(t *testing.T) {
 }
 
 func TestHelloWorld(t *testing.T) {
-	ensureEnvoy(t)
+	ensureE2ESetup(t)
 
 	// Make a request to the envoy proxy.
 	require.Eventually(t, func() bool {
