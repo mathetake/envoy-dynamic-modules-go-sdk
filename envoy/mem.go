@@ -40,7 +40,6 @@ type (
 	pinedHttpFilterInstance struct {
 		filterInstance HttpFilterInstance
 		next, prev     *pinedHttpFilterInstance
-		envoyFilter    EnvoyFilterInstance
 	}
 )
 

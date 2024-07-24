@@ -49,3 +49,5 @@ check:
 		echo "The following differences will fail CI until committed:"; \
 		git diff --exit-code; \
 	fi
+
+all: precommit build test conformance

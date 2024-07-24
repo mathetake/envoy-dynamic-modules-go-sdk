@@ -17,8 +17,6 @@ type EnvoyFilterInstance interface {
 	ContinueRequest()
 	// ContinueResponse is a function that continues the response processing.
 	ContinueResponse()
-	// Destroyed returns true if the stream is destroyed.
-	Destroyed() bool
 }
 
 // RequestHeaders is an opaque object that represents the underlying Envoy Http request headers map.
