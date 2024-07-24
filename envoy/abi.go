@@ -42,11 +42,11 @@ func __envoy_dynamic_module_v1_event_http_filter_destroy(
 //export __envoy_dynamic_module_v1_event_http_filter_instance_init
 func __envoy_dynamic_module_v1_event_http_filter_instance_init(
 	envoyFilterPtr C.__envoy_dynamic_module_v1_type_EnvoyFilterInstancePtr,
-	moduleCtx C.__envoy_dynamic_module_v1_type_HttpFilterPtr,
+	httpFilterPtr C.__envoy_dynamic_module_v1_type_HttpFilterPtr,
 ) C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr {
-	envoyPtr := &envoyFilterC{raw: envoyFilterPtr}
-	m := *(*HttpFilter)(unsafe.Pointer(uintptr(moduleCtx))) //nolint:govet
-	httpInstance := m.NewHttpFilterInstance(envoyPtr)
+	envoyPtr := &envoyFilterInstance{raw: envoyFilterPtr}
+	httpFilter := memManager.unwrapPinnedHttpFilter(uintptr(httpFilterPtr))
+	httpInstance := httpFilter.filter.NewHttpFilterInstance(envoyPtr)
 	pined := memManager.pinHttpFilterInstance(httpInstance)
 	pined.envoyFilter = envoyPtr
 	return C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr(uintptr((unsafe.Pointer(pined))))
@@ -59,7 +59,7 @@ func __envoy_dynamic_module_v1_event_http_filter_instance_request_headers(
 	endOfStream C.__envoy_dynamic_module_v1_type_EndOfStream,
 ) C.__envoy_dynamic_module_v1_type_EventHttpRequestHeadersStatus {
 	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpFilterInstancePtr))
-	mapPtr := requestHeadersC{raw: requestHeadersPtr}
+	mapPtr := RequestHeaders{raw: requestHeadersPtr}
 	end := endOfStream != 0
 	result := httpInstance.filterInstance.EventHttpRequestHeaders(mapPtr, end)
 	return C.__envoy_dynamic_module_v1_type_EventHttpRequestHeadersStatus(result)
@@ -71,7 +71,7 @@ func __envoy_dynamic_module_v1_event_http_filter_instance_request_body(
 	buffer C.__envoy_dynamic_module_v1_type_HttpRequestBodyBufferPtr,
 	endOfStream C.__envoy_dynamic_module_v1_type_EndOfStream) C.__envoy_dynamic_module_v1_type_EventHttpRequestBodyStatus {
 	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpFilterInstancePtr))
-	buf := requestBodyBufferC{raw: buffer}
+	buf := RequestBodyBuffer{raw: buffer}
 	end := endOfStream != 0
 	result := httpInstance.filterInstance.EventHttpRequestBody(buf, end)
 	return C.__envoy_dynamic_module_v1_type_EventHttpRequestBodyStatus(result)
@@ -83,7 +83,7 @@ func __envoy_dynamic_module_v1_event_http_filter_instance_response_headers(
 	responseHeadersMapPtr C.__envoy_dynamic_module_v1_type_HttpResponseHeaderMapPtr,
 	endOfStream C.__envoy_dynamic_module_v1_type_EndOfStream) C.__envoy_dynamic_module_v1_type_EventHttpResponseHeadersStatus {
 	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpFilterInstancePtr))
-	mapPtr := responseHeadersC{raw: responseHeadersMapPtr}
+	mapPtr := ResponseHeaders{raw: responseHeadersMapPtr}
 	end := endOfStream != 0
 	result := httpInstance.filterInstance.EventHttpResponseHeaders(mapPtr, end)
 	return C.__envoy_dynamic_module_v1_type_EventHttpResponseHeadersStatus(result)
@@ -95,7 +95,7 @@ func __envoy_dynamic_module_v1_event_http_filter_instance_response_body(
 	buffer C.__envoy_dynamic_module_v1_type_HttpResponseBodyBufferPtr,
 	endOfStream C.__envoy_dynamic_module_v1_type_EndOfStream) C.__envoy_dynamic_module_v1_type_EventHttpResponseBodyStatus {
 	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpFilterInstancePtr))
-	buf := responseBodyBufferC{raw: buffer}
+	buf := ResponseBodyBuffer{raw: buffer}
 	end := endOfStream != 0
 	result := httpInstance.filterInstance.EventHttpResponseBody(buf, end)
 	return C.__envoy_dynamic_module_v1_type_EventHttpResponseBodyStatus(result)
@@ -106,76 +106,72 @@ func __envoy_dynamic_module_v1_event_http_filter_instance_destroy(
 	httpFilterInstancePtr C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr) {
 	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpFilterInstancePtr))
 	httpInstance.filterInstance.EventHttpDestroy(httpInstance.envoyFilter)
-	httpInstance.envoyFilter.(*envoyFilterC).destroyed = true
+	httpInstance.envoyFilter.destroyed = true
 	memManager.unpinHttpFilterInstance((*pinedHttpFilterInstance)(unsafe.Pointer(uintptr(httpFilterInstancePtr))))
 }
 
-// envoyFilterC implements the EnvoyFilterInstance.
-type envoyFilterC struct {
+// envoyFilterInstance implements the EnvoyFilterInstance interface in abi_nocgo.go which is not included in the shared library.
+type envoyFilterInstance struct {
 	raw       C.__envoy_dynamic_module_v1_type_EnvoyFilterInstancePtr
 	destroyed bool
 }
 
-// ContinueRequest implements EnvoyFilterInstance.
-func (c *envoyFilterC) ContinueRequest() {
+// EnvoyFilterInstance implements the EnvoyFilterInstance interface in abi_nocgo.go which is not included in the shared library.
+type EnvoyFilterInstance = *envoyFilterInstance
+
+// ContinueRequest implements EnvoyFilterInstance interface in abi_nocgo.go which is not included in the shared library.
+func (c *envoyFilterInstance) ContinueRequest() {
 	if c.destroyed {
 		return
 	}
 	C.__envoy_dynamic_module_v1_http_continue_request(c.raw)
 }
 
-// ContinueResponse implements EnvoyFilterInstance.
-func (c *envoyFilterC) ContinueResponse() {
+// ContinueResponse implements EnvoyFilterInstance interface in abi_nocgo.go which is not included in the shared library.
+func (c *envoyFilterInstance) ContinueResponse() {
 	if c.destroyed {
 		return
 	}
 	C.__envoy_dynamic_module_v1_http_continue_response(c.raw)
 }
 
-// GetRequestBodyBuffer implements EnvoyFilterInstance.
-func (c *envoyFilterC) GetRequestBodyBuffer() RequestBodyBuffer {
-	return requestBodyBufferC{raw: C.__envoy_dynamic_module_v1_http_get_request_body_buffer(c.raw)}
+// GetRequestBodyBuffer implements EnvoyFilterInstance interface in abi_nocgo.go which is not included in the shared library.
+func (c *envoyFilterInstance) GetRequestBodyBuffer() RequestBodyBuffer {
+	return RequestBodyBuffer{raw: C.__envoy_dynamic_module_v1_http_get_request_body_buffer(c.raw)}
 }
 
-// GetResponseBodyBuffer implements EnvoyFilterInstance.
-func (c *envoyFilterC) GetResponseBodyBuffer() ResponseBodyBuffer {
-	return responseBodyBufferC{raw: C.__envoy_dynamic_module_v1_http_get_response_body_buffer(c.raw)}
+// GetResponseBodyBuffer implements EnvoyFilterInstance interface in abi_nocgo.go which is not included in the shared library.
+func (c *envoyFilterInstance) GetResponseBodyBuffer() ResponseBodyBuffer {
+	return ResponseBodyBuffer{raw: C.__envoy_dynamic_module_v1_http_get_response_body_buffer(c.raw)}
 }
 
-// Destroyed implements EnvoyFilterInstance.
-func (c *envoyFilterC) Destroyed() bool {
+// Destroyed implements EnvoyFilterInstance interface in abi_nocgo.go which is not included in the shared library.
+func (c *envoyFilterInstance) Destroyed() bool {
 	return c.destroyed
 }
 
-// requestHeadersC implements RequestHeaders.
-type requestHeadersC struct {
+// RequestHeaders implements RequestHeaders interface in abi_nocgo.go which is not included in the shared library.
+type RequestHeaders struct {
 	raw C.__envoy_dynamic_module_v1_type_HttpRequestHeadersMapPtr
 }
 
-// responseHeadersC implements ResponseHeaders.
-type responseHeadersC struct {
+// ResponseHeaders implements ResponseHeaders interface in abi_nocgo.go which is not included in the shared library.
+type ResponseHeaders struct {
 	raw C.__envoy_dynamic_module_v1_type_HttpResponseHeaderMapPtr
 }
 
-// requestBodyBufferC implements RequestBodyBuffer.
-type requestBodyBufferC struct {
+// RequestBodyBuffer implements RequestBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+type RequestBodyBuffer struct {
 	raw C.__envoy_dynamic_module_v1_type_HttpRequestBodyBufferPtr
 }
 
-// responseBodyBufferC implements ResponseBodyBuffer.
-type responseBodyBufferC struct {
+// ResponseBodyBuffer implements ResponseBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+type ResponseBodyBuffer struct {
 	raw C.__envoy_dynamic_module_v1_type_HttpResponseBodyBufferPtr
 }
 
-var (
-	_ RequestHeaders     = (*requestHeadersC)(nil)
-	_ ResponseHeaders    = (*responseHeadersC)(nil)
-	_ RequestBodyBuffer  = (*requestBodyBufferC)(nil)
-	_ ResponseBodyBuffer = (*responseBodyBufferC)(nil)
-)
-
-// Get implements RequestHeaders.
-func (r requestHeadersC) Get(key string) (HeaderValue, bool) {
+// Get implements RequestHeaders interface in abi_nocgo.go which is not included in the shared library.
+func (r RequestHeaders) Get(key string) (HeaderValue, bool) {
 	// Take the raw pointer to the key by using unsafe.
 	keyPtr := uintptr(unsafe.Pointer(unsafe.StringData(key)))
 	keySize := len(key)
@@ -195,8 +191,8 @@ func (r requestHeadersC) Get(key string) (HeaderValue, bool) {
 	return HeaderValue{data: resultPtr, size: int(resultSize)}, true
 }
 
-// Values implements RequestHeaders.
-func (r requestHeadersC) Values(key string, iter func(value HeaderValue)) {
+// Values implements RequestHeaders interface in abi_nocgo.go which is not included in the shared library.
+func (r RequestHeaders) Values(key string, iter func(value HeaderValue)) {
 	// Take the raw pointer to the key by using unsafe.
 	keyPtr := uintptr(unsafe.Pointer(unsafe.StringData(key)))
 	keySize := len(key)
@@ -228,8 +224,8 @@ func (r requestHeadersC) Values(key string, iter func(value HeaderValue)) {
 	runtime.KeepAlive(key)
 }
 
-// Set implements RequestHeaders.
-func (r requestHeadersC) Set(key, value string) {
+// Set implements RequestHeaders interface in abi_nocgo.go which is not included in the shared library.
+func (r RequestHeaders) Set(key, value string) {
 	r.set(
 		uintptr(unsafe.Pointer(unsafe.StringData(key))), len(key),
 		uintptr(unsafe.Pointer(unsafe.StringData(value))), len(value),
@@ -238,13 +234,13 @@ func (r requestHeadersC) Set(key, value string) {
 	runtime.KeepAlive(value)
 }
 
-// Remove implements RequestHeaders.
-func (r requestHeadersC) Remove(key string) {
+// Remove implements RequestHeaders interface in abi_nocgo.go which is not included in the shared library.
+func (r RequestHeaders) Remove(key string) {
 	r.set(uintptr(unsafe.Pointer(unsafe.StringData(key))), len(key), 0, 0)
 	runtime.KeepAlive(key)
 }
 
-func (r requestHeadersC) set(keyPtr uintptr, keySize int, valuePtr uintptr, valueSize int) {
+func (r RequestHeaders) set(keyPtr uintptr, keySize int, valuePtr uintptr, valueSize int) {
 	C.__envoy_dynamic_module_v1_http_set_request_header(r.raw,
 		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(keyPtr),
 		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(keySize),
@@ -253,8 +249,8 @@ func (r requestHeadersC) set(keyPtr uintptr, keySize int, valuePtr uintptr, valu
 	)
 }
 
-// Values implements ResponseHeaders.
-func (r responseHeadersC) Get(key string) (HeaderValue, bool) {
+// Values implements ResponseHeaders interface in abi_nocgo.go which is not included in the shared library.
+func (r ResponseHeaders) Get(key string) (HeaderValue, bool) {
 	// Take the raw pointer to the key by using unsafe.
 	keyPtr := uintptr(unsafe.Pointer(unsafe.StringData(key)))
 	keySize := len(key)
@@ -274,8 +270,8 @@ func (r responseHeadersC) Get(key string) (HeaderValue, bool) {
 	return HeaderValue{data: resultPtr, size: resultSize}, true
 }
 
-// Values implements ResponseHeaders.
-func (r responseHeadersC) Values(key string, iter func(value HeaderValue)) {
+// Values implements ResponseHeaders interface in abi_nocgo.go which is not included in the shared library.
+func (r ResponseHeaders) Values(key string, iter func(value HeaderValue)) {
 	// Take the raw pointer to the key by using unsafe.
 	keyPtr := uintptr(unsafe.Pointer(unsafe.StringData(key)))
 	keySize := len(key)
@@ -308,8 +304,8 @@ func (r responseHeadersC) Values(key string, iter func(value HeaderValue)) {
 	runtime.KeepAlive(key)
 }
 
-// Set implements ResponseHeaders.
-func (r responseHeadersC) Set(key, value string) {
+// Set implements ResponseHeaders interface in abi_nocgo.go which is not included in the shared library.
+func (r ResponseHeaders) Set(key, value string) {
 	r.set(
 		uintptr(unsafe.Pointer(unsafe.StringData(key))), len(key),
 		uintptr(unsafe.Pointer(unsafe.StringData(value))), len(value),
@@ -318,13 +314,13 @@ func (r responseHeadersC) Set(key, value string) {
 	runtime.KeepAlive(value)
 }
 
-// Remove implements ResponseHeaders.
-func (r responseHeadersC) Remove(key string) {
+// Remove implements ResponseHeaders interface in abi_nocgo.go which is not included in the shared library.
+func (r ResponseHeaders) Remove(key string) {
 	r.set(uintptr(unsafe.Pointer(unsafe.StringData(key))), len(key), 0, 0)
 	runtime.KeepAlive(key)
 }
 
-func (r responseHeadersC) set(keyPtr uintptr, keySize int, valuePtr uintptr, valueSize int) {
+func (r ResponseHeaders) set(keyPtr uintptr, keySize int, valuePtr uintptr, valueSize int) {
 	C.__envoy_dynamic_module_v1_http_set_response_header(r.raw,
 		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(keyPtr),
 		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(keySize),
@@ -333,13 +329,13 @@ func (r responseHeadersC) set(keyPtr uintptr, keySize int, valuePtr uintptr, val
 	)
 }
 
-// Length implements RequestBodyBuffer.
-func (r requestBodyBufferC) Length() int {
+// Length implements RequestBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r RequestBodyBuffer) Length() int {
 	return int(C.__envoy_dynamic_module_v1_http_get_request_body_buffer_length(r.raw))
 }
 
-// Slice implements RequestBodyBuffer.
-func (r requestBodyBufferC) Slices(iter func(view []byte)) {
+// Slice implements RequestBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r RequestBodyBuffer) Slices(iter func(view []byte)) {
 	sliceCount := C.__envoy_dynamic_module_v1_http_get_request_body_buffer_slices_count(r.raw)
 	for i := C.size_t(0); i < sliceCount; i++ {
 		var ptr *byte
@@ -353,8 +349,8 @@ func (r requestBodyBufferC) Slices(iter func(view []byte)) {
 	}
 }
 
-// Copy implements RequestBodyBuffer.
-func (r requestBodyBufferC) Copy() []byte {
+// Copy implements RequestBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r RequestBodyBuffer) Copy() []byte {
 	bytes := make([]byte, r.Length())
 	offset := 0
 	r.Slices(func(view []byte) {
@@ -364,8 +360,8 @@ func (r requestBodyBufferC) Copy() []byte {
 	return bytes
 }
 
-// ReadAt implements io.ReaderAt.
-func (r requestBodyBufferC) ReadAt(p []byte, off int64) (n int, err error) {
+// ReadAt implements io.ReaderAt, and RequestBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r RequestBodyBuffer) ReadAt(p []byte, off int64) (n int, err error) {
 	length := r.Length()
 	if off >= int64(length) {
 		return 0, io.EOF
@@ -382,13 +378,13 @@ func (r requestBodyBufferC) ReadAt(p []byte, off int64) (n int, err error) {
 	return len(p), err
 }
 
-// Length implements ResponseBodyBuffer.
-func (r responseBodyBufferC) Length() int {
+// Length implements ResponseBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r ResponseBodyBuffer) Length() int {
 	return int(C.__envoy_dynamic_module_v1_http_get_response_body_buffer_length(r.raw))
 }
 
-// Slice implements ResponseBodyBuffer.
-func (r responseBodyBufferC) Slices(iter func(view []byte)) {
+// Slice implements ResponseBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r ResponseBodyBuffer) Slices(iter func(view []byte)) {
 	sliceCount := C.__envoy_dynamic_module_v1_http_get_response_body_buffer_slices_count(r.raw)
 	for i := C.size_t(0); i < sliceCount; i++ {
 		var ptr *byte
@@ -402,8 +398,8 @@ func (r responseBodyBufferC) Slices(iter func(view []byte)) {
 	}
 }
 
-// Copy implements ResponseBodyBuffer.
-func (r responseBodyBufferC) Copy() []byte {
+// Copy implements ResponseBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r ResponseBodyBuffer) Copy() []byte {
 	bytes := make([]byte, r.Length())
 	offset := 0
 	r.Slices(func(view []byte) {
@@ -413,8 +409,8 @@ func (r responseBodyBufferC) Copy() []byte {
 	return bytes
 }
 
-// ReadAt implements io.ReaderAt.
-func (r responseBodyBufferC) ReadAt(p []byte, off int64) (n int, err error) {
+// ReadAt implements io.ReaderAt, and RequestBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r ResponseBodyBuffer) ReadAt(p []byte, off int64) (n int, err error) {
 	length := r.Length()
 	if off >= int64(length) {
 		return 0, io.EOF
@@ -431,8 +427,8 @@ func (r responseBodyBufferC) ReadAt(p []byte, off int64) (n int, err error) {
 	return len(p), err
 }
 
-// Append implements RequestBodyBuffer.
-func (r requestBodyBufferC) Append(data []byte) {
+// Append implements RequestBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r RequestBodyBuffer) Append(data []byte) {
 	C.__envoy_dynamic_module_v1_http_append_request_body_buffer(
 		r.raw,
 		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(uintptr(unsafe.Pointer(&data[0]))),
@@ -441,8 +437,8 @@ func (r requestBodyBufferC) Append(data []byte) {
 	runtime.KeepAlive(data)
 }
 
-// Prepend implements RequestBodyBuffer.
-func (r requestBodyBufferC) Prepend(data []byte) {
+// Prepend implements RequestBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r RequestBodyBuffer) Prepend(data []byte) {
 	C.__envoy_dynamic_module_v1_http_prepend_request_body_buffer(
 		r.raw,
 		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(uintptr(unsafe.Pointer(&data[0]))),
@@ -452,18 +448,18 @@ func (r requestBodyBufferC) Prepend(data []byte) {
 
 }
 
-// Drain implements RequestBodyBuffer.
-func (r requestBodyBufferC) Drain(length int) {
+// Drain implements RequestBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r RequestBodyBuffer) Drain(length int) {
 	C.__envoy_dynamic_module_v1_http_drain_request_body_buffer(r.raw, C.size_t(length))
 }
 
-func (r requestBodyBufferC) Replace(data []byte) {
+func (r RequestBodyBuffer) Replace(data []byte) {
 	r.Drain(r.Length())
 	r.Append(data)
 }
 
-// Append implements ResponseBodyBuffer.
-func (r responseBodyBufferC) Append(data []byte) {
+// Append implements ResponseBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r ResponseBodyBuffer) Append(data []byte) {
 	C.__envoy_dynamic_module_v1_http_append_response_body_buffer(
 		r.raw,
 		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(uintptr(unsafe.Pointer(&data[0]))),
@@ -472,8 +468,8 @@ func (r responseBodyBufferC) Append(data []byte) {
 	runtime.KeepAlive(data)
 }
 
-// Prepend implements ResponseBodyBuffer.
-func (r responseBodyBufferC) Prepend(data []byte) {
+// Prepend implements ResponseBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r ResponseBodyBuffer) Prepend(data []byte) {
 	C.__envoy_dynamic_module_v1_http_prepend_response_body_buffer(
 		r.raw,
 		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(uintptr(unsafe.Pointer(&data[0]))),
@@ -482,13 +478,13 @@ func (r responseBodyBufferC) Prepend(data []byte) {
 	runtime.KeepAlive(data)
 }
 
-// Drain implements ResponseBodyBuffer.
-func (r responseBodyBufferC) Drain(length int) {
+// Drain implements ResponseBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r ResponseBodyBuffer) Drain(length int) {
 	C.__envoy_dynamic_module_v1_http_drain_response_body_buffer(r.raw, C.size_t(length))
 }
 
-// Replace implements ResponseBodyBuffer.
-func (r responseBodyBufferC) Replace(data []byte) {
+// Replace implements ResponseBodyBuffer interface in abi_nocgo.go which is not included in the shared library.
+func (r ResponseBodyBuffer) Replace(data []byte) {
 	r.Drain(r.Length())
 	r.Append(data)
 }
