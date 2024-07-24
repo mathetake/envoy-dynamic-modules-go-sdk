@@ -53,6 +53,6 @@ func (h *helloWorldHttpFilterInstance) EventHttpResponseBody(envoy.ResponseBodyB
 }
 
 // EventHttpDestroy implements envoy.HttpFilterInstance.
-func (h *helloWorldHttpFilterInstance) EventHttpDestroy(envoy.EnvoyFilterInstance) {
+func (h *helloWorldHttpFilterInstance) EventHttpDestroy() {
 	fmt.Println("helloWorldHttpFilterInstance.EventHttpDestroy called")
 }

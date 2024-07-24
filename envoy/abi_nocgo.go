@@ -17,8 +17,6 @@ type EnvoyFilterInstance interface {
 	ContinueRequest()
 	// ContinueResponse is a function that continues the response processing.
 	ContinueResponse()
-	// Destroyed returns true if the stream is destroyed.
-	Destroyed() bool
 }
 
 // RequestHeaders is an opaque object that represents the underlying Envoy Http request headers map.
@@ -37,7 +35,7 @@ type RequestHeaders interface {
 	Remove(key string)
 }
 
-// ResponseHeadersMap is an opaque object that represents the underlying Envoy Http response headers map.
+// ResponseHeaders is an opaque object that represents the underlying Envoy Http response headers map.
 // This is used to interact with it from the module code.
 type ResponseHeaders interface {
 	// Get returns the first header value for the given key. To handle multiple values, use the Values method.
