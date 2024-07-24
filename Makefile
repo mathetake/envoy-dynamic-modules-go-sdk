@@ -10,7 +10,7 @@ build:
 
 .PHONY: test
 test:
-	@CGO_ENABLED=0 go test $(shell go list ./... | grep -v e2e)
+	@CGO_ENABLED=0 go test ./...
 
 .PHONY: conformance
 conformance:
