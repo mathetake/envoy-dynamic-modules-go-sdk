@@ -6,7 +6,7 @@ single shared library but to server multiple HTTP filters. See [envoy.yaml](envo
 In main.go, this multiplexes the different HTTP filters based on the `filter_config` parameter given in the Envoy configuration.
 Each file named `filter_<name>.go` is a separate HTTP filter implementation which is run on the separater HTTP filter chain.
 
-Note that this example is written in a way that it passes the [sdk-conformance-tests](https://github.com/envoyproxy/sdk-conformance-tests) and can be used as a reference for using Go SDK APIs.
+Note that this example is written in a way that it passes the [sdk-conformance-tests](https://github.com/envoyproxyx/sdk-conformance-tests) and can be used as a reference for using Go SDK APIs.
 
 ## Build and Run
 
