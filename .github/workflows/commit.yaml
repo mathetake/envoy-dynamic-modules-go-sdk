@@ -19,7 +19,7 @@ jobs:
         with:
           cache: false
           go-version: ${{ env.GO_VERSION }}
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
@@ -30,20 +30,29 @@ jobs:
       - run: make check
 
   test:
-    name: Build and Test (envoy:${{ matrix.envoyx_image_tag }})
+    name: Build and Test (envoy:${{ matrix.version.envoyx_image_tag }})
     strategy:
       fail-fast: false
       matrix:
-        envoyx_image_tag:
-        - debug-v1.31-latest-envoyx-main
-        - debug-v1.30-latest-envoyx-main
-        - debug-v1.29-latest-envoyx-main
-        - v1.31-latest-envoyx-main
-        - v1.30-latest-envoyx-main
-        - v1.29-latest-envoyx-main
-        - v1.31-latest-envoyx-v1.0.0
-        - v1.30-latest-envoyx-v1.0.0
-        - v1.29-latest-envoyx-v1.0.0
+        version:
+        - envoyx_image_tag: debug-v1.31-latest-envoyx-main
+          envoyx_version: main
+        - envoyx_image_tag: debug-v1.30-latest-envoyx-main
+          envoyx_version: main
+        - envoyx_image_tag: debug-v1.29-latest-envoyx-main
+          envoyx_version: main
+        - envoyx_image_tag: v1.31-latest-envoyx-main
+          envoyx_version: main
+        - envoyx_image_tag: v1.30-latest-envoyx-main
+          envoyx_version: main
+        - envoyx_image_tag: v1.29-latest-envoyx-main
+          envoyx_version: main
+        - envoyx_image_tag: v1.31-latest-envoyx-v1.0.0
+          envoyx_version: v1.0.0
+        - envoyx_image_tag: v1.30-latest-envoyx-v1.0.0
+          envoyx_version: v1.0.0
+        - envoyx_image_tag: v1.29-latest-envoyx-v1.0.0
+          envoyx_version: v1.0.0
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,24 +60,28 @@ jobs:
         with:
           cache: false
           go-version: ${{ env.GO_VERSION }}
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
             ~/.cache/golangci-lint
             ~/go/pkg/mod
             ~/go/bin
-          key: build-and-test-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum', 'Makefile') }}
-      - name: Install Envoy
-        run: |
-          export ENVOY_BIN_DIR=$HOME/envoy/bin
-          mkdir -p $ENVOY_BIN_DIR
-          docker run -v $ENVOY_BIN_DIR:/work/go-sdk -w /work/go-sdk \
-            --entrypoint /bin/cp ghcr.io/envoyproxyx/envoy:${{ matrix.envoyx_image_tag }} /usr/local/bin/envoy .
-          echo $ENVOY_BIN_DIR >> $GITHUB_PATH
+          key: build-and-test-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum', 'Makefile') }}-${{ matrix.version.envoyx_image_tag }}-${{ matrix.version.envoyx_version }}
 
       - name: Build
         run: make build
 
       - name: Unit tests
         run: make test
+
+      - name: Install Envoy
+        run: |
+          export ENVOY_BIN_DIR=$HOME/envoy/bin
+          mkdir -p $ENVOY_BIN_DIR
+          docker run -v $ENVOY_BIN_DIR:/work/go-sdk -w /work/go-sdk \
+            --entrypoint /bin/cp ghcr.io/envoyproxyx/envoy:${{ matrix.version.envoyx_image_tag }} /usr/local/bin/envoy .
+          echo $ENVOY_BIN_DIR >> $GITHUB_PATH
+
+      - name: Conformance tests
+        run: make conformance envoyx_version=${{ matrix.version.envoyx_version }}

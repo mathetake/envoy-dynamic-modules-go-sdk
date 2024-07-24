@@ -1,22 +1,25 @@
+envoyx_version ?= main
+
 goimports := golang.org/x/tools/cmd/goimports@v0.21.0
 golangci_lint := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.0
+sdk_conformance_tests := github.com/envoyproxyx/sdk-conformance-tests@${envoyx_version}
 
 .PHONY: build
 build:
-	@go build ./...
-	@cd example && go build -buildmode=c-shared -o main .
+	@go build -buildmode=c-shared -o example/main.so ./example/
 
 .PHONY: test
 test:
-	@go test $(shell go list ./... | grep -v e2e)
-	@cd example && CGO_ENABLED=0 go test ./... -count=1
+	@CGO_ENABLED=0 go test $(shell go list ./... | grep -v e2e)
+
+.PHONY: conformance
+conformance:
+	@go run $(sdk_conformance_tests) --shared-library-path=./example/main.so
 
 .PHONY: lint
 lint:
 	@echo "lint => ./..."
 	@go run $(golangci_lint) run ./...
-	@echo "lint => example/"
-	@cd example && go run $(golangci_lint) run ./...
 
 .PHONY: format
 format:
