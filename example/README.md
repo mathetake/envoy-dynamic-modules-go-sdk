@@ -13,6 +13,6 @@ Note that this example is written in a way that it passes the [sdk-conformance-t
 To build and run the example, run the following, assuming you have `envoy` installed as exaplined in [README.md](../README.md):
 
 ```
-CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -buildmode=c-shared -o main .
+CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -buildmode=c-shared -o main.so .
 envoy -c envoy.yaml
 ```

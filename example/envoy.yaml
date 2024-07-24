@@ -71,7 +71,7 @@ static_resources:
                       # The name is *optional* and is only used for logging by Envoy, not for modules.
                       name: test
                       # The file_path is the path to the shared object file. We share the same file for both http filter chain.
-                      file_path: main
+                      file_path: main.so
                       # This is passed to newHttpFilter in main.go
                       filter_config: "helloworld"
                       # Since c-shared modules by the Go compiler toolchain do not support dlclose, https://github.com/golang/go/issues/11100
@@ -111,7 +111,7 @@ static_resources:
                       # Schema is defined at https://github.com/envoyproxyx/envoyx/blob/main/x/config.proto
                       "@type": type.googleapis.com/envoy.extensions.filters.http.dynamic_modules.v3.DynamicModuleConfig
                       # The file_path is the path to the shared object file. We share the same file for both http filter chain.
-                      file_path: main
+                      file_path: main.so
                       # This is passed to newHttpFilter in main.go
                       filter_config: "delay"
                       # Since c-shared modules by the Go compiler toolchain do not support dlclose, https://github.com/golang/go/issues/11100
@@ -151,7 +151,7 @@ static_resources:
                       # Schema is defined at https://github.com/envoyproxyx/envoyx/blob/main/x/config.proto
                       "@type": type.googleapis.com/envoy.extensions.filters.http.dynamic_modules.v3.DynamicModuleConfig
                       # The file_path is the path to the shared object file. We share the same file for both http filter chain.
-                      file_path: main
+                      file_path: main.so
                       # This is passed to newHttpFilter in main.go
                       filter_config: "headers"
                       # Since c-shared modules by the Go compiler toolchain do not support dlclose, https://github.com/golang/go/issues/11100
@@ -191,7 +191,7 @@ static_resources:
                       # Schema is defined at https://github.com/envoyproxyx/envoyx/blob/main/x/config.proto
                       "@type": type.googleapis.com/envoy.extensions.filters.http.dynamic_modules.v3.DynamicModuleConfig
                       # The file_path is the path to the shared object file. We share the same file for both http filter chain.
-                      file_path: main
+                      file_path: main.so
                       # This is passed to newHttpFilter in main.go
                       filter_config: "bodies"
                       # Since c-shared modules by the Go compiler toolchain do not support dlclose, https://github.com/golang/go/issues/11100
@@ -231,7 +231,7 @@ static_resources:
                       # Schema is defined at https://github.com/envoyproxyx/envoyx/blob/main/x/config.proto
                       "@type": type.googleapis.com/envoy.extensions.filters.http.dynamic_modules.v3.DynamicModuleConfig
                       # The file_path is the path to the shared object file. We share the same file for both http filter chain.
-                      file_path: main
+                      file_path: main.so
                       # This is passed to newHttpFilter in main.go
                       filter_config: "bodies_replace"
                       # Since c-shared modules by the Go compiler toolchain do not support dlclose, https://github.com/golang/go/issues/11100
