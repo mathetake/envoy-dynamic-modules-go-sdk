@@ -1,6 +1,8 @@
+envoyx_version ?= main
+
 goimports := golang.org/x/tools/cmd/goimports@v0.21.0
 golangci_lint := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.0
-sdk_conformance_tests := github.com/envoyproxyx/sdk-conformance-tests@main
+sdk_conformance_tests := github.com/envoyproxyx/sdk-conformance-tests@${envoyx_version}
 
 .PHONY: build
 build:
