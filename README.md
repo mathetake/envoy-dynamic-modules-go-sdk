@@ -23,10 +23,9 @@ See [github/workflows/commit.yaml](.github/workflows/commit.yaml) for the curren
 You can build the example and run tests with the following commands:
 
 ```bash
-make build
-make test
+make all
 ```
-and if the test passes, you can assume the shared library is compatible with the EnvoyX.
+and if the command succeeds, you can assume the shared library is compatible with the EnvoyX.
 
 ## Others
 
