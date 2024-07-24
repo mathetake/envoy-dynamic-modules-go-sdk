@@ -104,4 +104,4 @@ func (h *bodiesHttpFilterInstance) EventHttpResponseBody(body envoy.ResponseBody
 }
 
 // EventHttpDestroy implements envoy.HttpFilterInstance.
-func (h *bodiesHttpFilterInstance) EventHttpDestroy(envoy.EnvoyFilterInstance) {}
+func (h *bodiesHttpFilterInstance) EventHttpDestroy() {}

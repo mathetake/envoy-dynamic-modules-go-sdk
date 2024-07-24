@@ -37,7 +37,7 @@ type RequestHeaders interface {
 	Remove(key string)
 }
 
-// ResponseHeadersMap is an opaque object that represents the underlying Envoy Http response headers map.
+// ResponseHeaders is an opaque object that represents the underlying Envoy Http response headers map.
 // This is used to interact with it from the module code.
 type ResponseHeaders interface {
 	// Get returns the first header value for the given key. To handle multiple values, use the Values method.

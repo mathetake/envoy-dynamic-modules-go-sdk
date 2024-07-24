@@ -105,7 +105,7 @@ func __envoy_dynamic_module_v1_event_http_filter_instance_response_body(
 func __envoy_dynamic_module_v1_event_http_filter_instance_destroy(
 	httpFilterInstancePtr C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr) {
 	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpFilterInstancePtr))
-	httpInstance.filterInstance.EventHttpDestroy(httpInstance.envoyFilter)
+	httpInstance.filterInstance.EventHttpDestroy()
 	httpInstance.envoyFilter.destroyed = true
 	memManager.unpinHttpFilterInstance((*pinedHttpFilterInstance)(unsafe.Pointer(uintptr(httpFilterInstancePtr))))
 }

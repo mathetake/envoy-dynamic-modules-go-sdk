@@ -41,7 +41,9 @@ func (h *delayHttpFilterInstance) EventHttpRequestHeaders(_ envoy.RequestHeaders
 			fmt.Println("blocking for 1 second at EventHttpRequestHeaders with id", h.id)
 			time.Sleep(1 * time.Second)
 			fmt.Println("calling ContinueRequest with id", h.id)
-			h.envoyFilter.ContinueRequest()
+			if h.envoyFilter != nil { // By calling ContinueResponse, the filter might have been destroyed.
+				h.envoyFilter.ContinueRequest()
+			}
 		}()
 		fmt.Println("EventHttpRequestHeaders returning StopAllIterationAndBuffer with id", h.id)
 		return envoy.EventHttpRequestHeadersStatusStopAllIterationAndBuffer
@@ -57,7 +59,9 @@ func (h *delayHttpFilterInstance) EventHttpRequestBody(_ envoy.RequestBodyBuffer
 			fmt.Println("blocking for 1 second at EventHttpRequestBody with id", h.id)
 			time.Sleep(1 * time.Second)
 			fmt.Println("calling ContinueRequest with id", h.id)
-			h.envoyFilter.ContinueRequest()
+			if h.envoyFilter != nil { // By calling ContinueResponse, the filter might have been destroyed.
+				h.envoyFilter.ContinueRequest()
+			}
 		}()
 		fmt.Println("EventHttpRequestBody returning StopIterationAndBuffer with id", h.id)
 		return envoy.EventHttpRequestBodyStatusStopIterationAndBuffer
@@ -73,7 +77,9 @@ func (h *delayHttpFilterInstance) EventHttpResponseHeaders(_ envoy.ResponseHeade
 			fmt.Println("blocking for 1 second at EventHttpResponseHeaders with id", h.id)
 			time.Sleep(1 * time.Second)
 			fmt.Println("calling ContinueResponse with id", h.id)
-			h.envoyFilter.ContinueResponse()
+			if h.envoyFilter != nil { // By calling ContinueResponse, the filter might have been destroyed.
+				h.envoyFilter.ContinueResponse()
+			}
 		}()
 		fmt.Println("EventHttpResponseHeaders returning StopAllIterationAndBuffer with id", h.id)
 		return envoy.EventHttpResponseHeadersStatusStopAllIterationAndBuffer
@@ -89,7 +95,9 @@ func (h *delayHttpFilterInstance) EventHttpResponseBody(_ envoy.ResponseBodyBuff
 			fmt.Println("blocking for 1 second at EventHttpResponseBody with id", h.id)
 			time.Sleep(1 * time.Second)
 			fmt.Println("calling ContinueResponse with id", h.id)
-			h.envoyFilter.ContinueResponse()
+			if h.envoyFilter != nil { // By calling ContinueResponse, the filter might have been destroyed.
+				h.envoyFilter.ContinueResponse()
+			}
 		}()
 		fmt.Println("EventHttpResponseBody returning StopIterationAndBuffer with id", h.id)
 		return envoy.EventHttpResponseBodyStatusStopIterationAndBuffer
@@ -99,4 +107,7 @@ func (h *delayHttpFilterInstance) EventHttpResponseBody(_ envoy.ResponseBodyBuff
 }
 
 // EventHttpDestroy implements envoy.HttpFilterInstance.
-func (h *delayHttpFilterInstance) EventHttpDestroy(envoy.EnvoyFilterInstance) {}
+func (h *delayHttpFilterInstance) EventHttpDestroy() {
+	// After the request is done, we can clean up the filter instance.
+	h.envoyFilter = nil
+}

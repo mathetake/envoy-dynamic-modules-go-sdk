@@ -24,7 +24,7 @@ type HttpFilter interface {
 	//
 	// * `EnvoyFilterInstance` is the Envoy filter object that is used to interact with the underlying Envoy filter.
 	//  This object is unique for each Http request. The object is destroyed when the stream is destroyed.
-	//  Therefore, after EventHttpDestroy is called, the methods on this object become no-op.
+	//  Therefore, after EventHttpDestroy is called, this object should not be used.
 	NewHttpFilterInstance(EnvoyFilterInstance) HttpFilterInstance
 
 	// Destroy is called when this filter is destroyed. E.g. the filter chain configuration is updated and removed from the Envoy.
@@ -62,7 +62,7 @@ type HttpFilterInstance interface {
 
 	// EventHttpDestroy is called when the stream is destroyed.
 	// This is called when the stream is completed or when the stream is reset.
-	EventHttpDestroy(EnvoyFilterInstance)
+	EventHttpDestroy()
 }
 
 // HeaderValue represents a single header value whose data is owned by the Envoy.
