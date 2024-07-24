@@ -35,6 +35,9 @@ jobs:
       fail-fast: false
       matrix:
         envoyx_image_tag:
+        - debug-v1.31-latest-envoyx-main
+        - debug-v1.30-latest-envoyx-main
+        - debug-v1.29-latest-envoyx-main
         - v1.31-latest-envoyx-main
         - v1.30-latest-envoyx-main
         - v1.29-latest-envoyx-main
