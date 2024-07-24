@@ -59,6 +59,13 @@ jobs:
             ~/go/pkg/mod
             ~/go/bin
           key: build-and-test-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum', 'Makefile') }}
+
+      - name: Build
+        run: make build
+
+      - name: Unit tests
+        run: make test
+
       - name: Install Envoy
         run: |
           export ENVOY_BIN_DIR=$HOME/envoy/bin
@@ -67,8 +74,5 @@ jobs:
             --entrypoint /bin/cp ghcr.io/envoyproxyx/envoy:${{ matrix.envoyx_image_tag }} /usr/local/bin/envoy .
           echo $ENVOY_BIN_DIR >> $GITHUB_PATH
 
-      - name: Build
-        run: make build
-
-      - name: Unit tests
-        run: make test
+      - name: Conformance tests
+        run: make conformance

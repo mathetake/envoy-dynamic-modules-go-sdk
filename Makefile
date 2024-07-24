@@ -1,5 +1,6 @@
 goimports := golang.org/x/tools/cmd/goimports@v0.21.0
 golangci_lint := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.0
+sdk_conformance_tests := github.com/envoyproxyx/sdk-conformance-tests@main
 
 .PHONY: build
 build:
@@ -10,6 +11,10 @@ build:
 test:
 	@go test $(shell go list ./... | grep -v e2e)
 	@cd example && CGO_ENABLED=0 go test ./... -count=1
+
+.PHONY: conformance
+conformance:
+	@go run $(sdk_conformance_tests) --shared-library-path=./example/main
 
 .PHONY: lint
 lint:
