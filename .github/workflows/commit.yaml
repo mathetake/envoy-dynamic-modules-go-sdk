@@ -52,7 +52,7 @@ jobs:
             ~/.cache/golangci-lint
             ~/go/pkg/mod
             ~/go/bin
-          key: build-and-test-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum', 'Makefile') }}-${{ matrix.version.envoyx_image_tag }}-${{ matrix.version.envoyx_version }}
+          key: build-and-test-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum', 'Makefile') }}-${{ matrix.version.envoy_image_tag }}
 
       - name: Build
         run: make build

@@ -38,17 +38,17 @@ type delayHttpFilterInstance struct {
 func (h *delayHttpFilterInstance) RequestHeaders(_ envoy.RequestHeaders, _ bool) envoy.RequestHeadersStatus {
 	if h.id == 1 {
 		go func() {
-			fmt.Println("blocking for 1 second at EventHttpRequestHeaders with id", h.id)
+			fmt.Println("blocking for 1 second at RequestHeaders with id", h.id)
 			time.Sleep(1 * time.Second)
 			fmt.Println("calling ContinueRequest with id", h.id)
 			if h.envoyFilter != nil { // By calling ContinueResponse, the filter might have been destroyed.
 				h.envoyFilter.ContinueRequest()
 			}
 		}()
-		fmt.Println("EventHttpRequestHeaders returning StopAllIterationAndBuffer with id", h.id)
+		fmt.Println("RequestHeaders returning StopAllIterationAndBuffer with id", h.id)
 		return envoy.RequestHeadersStatusStopAllIterationAndBuffer
 	}
-	fmt.Println("EventHttpRequestHeaders called with id", h.id)
+	fmt.Println("RequestHeaders called with id", h.id)
 	return envoy.HeadersStatusContinue
 }
 
@@ -56,17 +56,17 @@ func (h *delayHttpFilterInstance) RequestHeaders(_ envoy.RequestHeaders, _ bool)
 func (h *delayHttpFilterInstance) RequestBody(_ envoy.RequestBodyBuffer, _ bool) envoy.RequestBodyStatus {
 	if h.id == 2 {
 		go func() {
-			fmt.Println("blocking for 1 second at EventHttpRequestBody with id", h.id)
+			fmt.Println("blocking for 1 second at RequestBody with id", h.id)
 			time.Sleep(1 * time.Second)
 			fmt.Println("calling ContinueRequest with id", h.id)
 			if h.envoyFilter != nil { // By calling ContinueResponse, the filter might have been destroyed.
 				h.envoyFilter.ContinueRequest()
 			}
 		}()
-		fmt.Println("EventHttpRequestBody returning StopIterationAndBuffer with id", h.id)
+		fmt.Println("RequestBody returning StopIterationAndBuffer with id", h.id)
 		return envoy.RequestBodyStatusStopIterationAndBuffer
 	}
-	fmt.Println("EventHttpRequestBody called with id", h.id)
+	fmt.Println("RequestBody called with id", h.id)
 	return envoy.RequestBodyStatusContinue
 }
 
@@ -74,17 +74,17 @@ func (h *delayHttpFilterInstance) RequestBody(_ envoy.RequestBodyBuffer, _ bool)
 func (h *delayHttpFilterInstance) ResponseHeaders(_ envoy.ResponseHeaders, _ bool) envoy.ResponseHeadersStatus {
 	if h.id == 3 {
 		go func() {
-			fmt.Println("blocking for 1 second at EventHttpResponseHeaders with id", h.id)
+			fmt.Println("blocking for 1 second at ResponseHeaders with id", h.id)
 			time.Sleep(1 * time.Second)
 			fmt.Println("calling ContinueResponse with id", h.id)
 			if h.envoyFilter != nil { // By calling ContinueResponse, the filter might have been destroyed.
 				h.envoyFilter.ContinueResponse()
 			}
 		}()
-		fmt.Println("EventHttpResponseHeaders returning StopAllIterationAndBuffer with id", h.id)
+		fmt.Println("ResponseHeaders returning StopAllIterationAndBuffer with id", h.id)
 		return envoy.ResponseHeadersStatusStopAllIterationAndBuffer
 	}
-	fmt.Println("EventHttpResponseHeaders called with id", h.id)
+	fmt.Println("ResponseHeaders called with id", h.id)
 	return envoy.ResponseHeadersStatusContinue
 }
 
@@ -92,17 +92,17 @@ func (h *delayHttpFilterInstance) ResponseHeaders(_ envoy.ResponseHeaders, _ boo
 func (h *delayHttpFilterInstance) ResponseBody(_ envoy.ResponseBodyBuffer, _ bool) envoy.ResponseBodyStatus {
 	if h.id == 4 {
 		go func() {
-			fmt.Println("blocking for 1 second at EventHttpResponseBody with id", h.id)
+			fmt.Println("blocking for 1 second at ResponseBody with id", h.id)
 			time.Sleep(1 * time.Second)
 			fmt.Println("calling ContinueResponse with id", h.id)
 			if h.envoyFilter != nil { // By calling ContinueResponse, the filter might have been destroyed.
 				h.envoyFilter.ContinueResponse()
 			}
 		}()
-		fmt.Println("EventHttpResponseBody returning StopIterationAndBuffer with id", h.id)
+		fmt.Println("ResponseBody returning StopIterationAndBuffer with id", h.id)
 		return envoy.ResponseBodyStatusStopIterationAndBuffer
 	}
-	fmt.Println("EventHttpResponseBody called with id", h.id)
+	fmt.Println("ResponseBody called with id", h.id)
 	return envoy.ResponseBodyStatusContinue
 }
 

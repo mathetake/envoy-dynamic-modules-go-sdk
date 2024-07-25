@@ -66,7 +66,7 @@ static_resources:
                   ######################################################################################################
                   - name: envoy.http.dynamic_modules
                     typed_config:
-                      # Schema is defined at https://github.com/envoyproxyx/envoyx/blob/main/x/config.proto
+                      # Schema is defined at https://github.com/mathetake/envoy-dynamic-modules/blob/main/x/config.proto
                       "@type": type.googleapis.com/envoy.extensions.filters.http.dynamic_modules.v3.DynamicModuleConfig
                       # The name is *optional* and is only used for logging by Envoy, not for modules.
                       name: test
@@ -108,7 +108,7 @@ static_resources:
                   ######################################################################################################
                   - name: envoy.http.dynamic_modules
                     typed_config:
-                      # Schema is defined at https://github.com/envoyproxyx/envoyx/blob/main/x/config.proto
+                      # Schema is defined at https://github.com/mathetake/envoy-dynamic-modules/blob/main/x/config.proto
                       "@type": type.googleapis.com/envoy.extensions.filters.http.dynamic_modules.v3.DynamicModuleConfig
                       # The file_path is the path to the shared object file. We share the same file for both http filter chain.
                       file_path: main.so
@@ -148,7 +148,7 @@ static_resources:
                   ######################################################################################################
                   - name: envoy.http.dynamic_modules
                     typed_config:
-                      # Schema is defined at https://github.com/envoyproxyx/envoyx/blob/main/x/config.proto
+                      # Schema is defined at https://github.com/mathetake/envoy-dynamic-modules/blob/main/x/config.proto
                       "@type": type.googleapis.com/envoy.extensions.filters.http.dynamic_modules.v3.DynamicModuleConfig
                       # The file_path is the path to the shared object file. We share the same file for both http filter chain.
                       file_path: main.so
@@ -188,7 +188,7 @@ static_resources:
                   ######################################################################################################
                   - name: envoy.http.dynamic_modules
                     typed_config:
-                      # Schema is defined at https://github.com/envoyproxyx/envoyx/blob/main/x/config.proto
+                      # Schema is defined at https://github.com/mathetake/envoy-dynamic-modules/blob/main/x/config.proto
                       "@type": type.googleapis.com/envoy.extensions.filters.http.dynamic_modules.v3.DynamicModuleConfig
                       # The file_path is the path to the shared object file. We share the same file for both http filter chain.
                       file_path: main.so
@@ -228,7 +228,7 @@ static_resources:
                   ######################################################################################################
                   - name: envoy.http.dynamic_modules
                     typed_config:
-                      # Schema is defined at https://github.com/envoyproxyx/envoyx/blob/main/x/config.proto
+                      # Schema is defined at https://github.com/mathetake/envoy-dynamic-modules/blob/main/x/config.proto
                       "@type": type.googleapis.com/envoy.extensions.filters.http.dynamic_modules.v3.DynamicModuleConfig
                       # The file_path is the path to the shared object file. We share the same file for both http filter chain.
                       file_path: main.so

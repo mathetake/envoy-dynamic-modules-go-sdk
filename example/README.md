@@ -1,6 +1,6 @@
-# EnvoyX Go SDK example
+# Envoy Dynamic Module Go SDK example
 
-This example demonstrates how to use the EnvoyX Go SDK to create HTTP filters for Envoy. This example is supposed to be compiled as a
+This example demonstrates how to use the Go SDK to create HTTP filters for Envoy. This example is supposed to be compiled as a
 single shared library but to server multiple HTTP filters. See [envoy.yaml](envoy.yaml) for the configuration.
 
 In main.go, this multiplexes the different HTTP filters based on the `filter_config` parameter given in the Envoy configuration.
