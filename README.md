@@ -7,7 +7,7 @@ this SDK facilitates the creation of Go-based shared libraries that can be loade
 in Envoy configuration. See the [example](./example) for more details.
 
 
-## Others
+## Links
 
 - [mathetake/envoy-dynamic-modules](https://github.com/mathetake/envoy-dynamic-modules): The main repository for the dynamic modules.
 - [mathetake/envoy-dynamic-modules-abi](https://github.com/mathetake/envoy-dynamic-modules-abi): The repository for the ABI definitions of the dynamic modules.
