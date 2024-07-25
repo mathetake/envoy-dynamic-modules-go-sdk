@@ -15,9 +15,9 @@ type delayHttpFilter struct{ requestCounts atomic.Int32 }
 
 func newDelayHttpFilter(string) envoy.HttpFilter { return &delayHttpFilter{} }
 
-// NewHttpFilterInstance implements envoy.HttpFilter.
-func (m *delayHttpFilter) NewHttpFilterInstance(e envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
-	// NewHttpFilterInstance is called for each new Http request, so we can use a counter to track the number of requests.
+// NewInstance implements envoy.HttpFilter.
+func (m *delayHttpFilter) NewInstance(e envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
+	// NewInstance is called for each new Http request, so we can use a counter to track the number of requests.
 	// On the other hand, that means this function must be thread-safe.
 	id := m.requestCounts.Add(1)
 	return &delayHttpFilterInstance{id: id, envoyFilter: e}
@@ -34,8 +34,8 @@ type delayHttpFilterInstance struct {
 	envoyFilter envoy.EnvoyFilterInstance
 }
 
-// EventHttpRequestHeaders implements envoy.HttpFilterInstance.
-func (h *delayHttpFilterInstance) EventHttpRequestHeaders(_ envoy.RequestHeaders, _ bool) envoy.EventHttpRequestHeadersStatus {
+// RequestHeaders implements envoy.HttpFilterInstance.
+func (h *delayHttpFilterInstance) RequestHeaders(_ envoy.RequestHeaders, _ bool) envoy.RequestHeadersStatus {
 	if h.id == 1 {
 		go func() {
 			fmt.Println("blocking for 1 second at EventHttpRequestHeaders with id", h.id)
@@ -46,14 +46,14 @@ func (h *delayHttpFilterInstance) EventHttpRequestHeaders(_ envoy.RequestHeaders
 			}
 		}()
 		fmt.Println("EventHttpRequestHeaders returning StopAllIterationAndBuffer with id", h.id)
-		return envoy.EventHttpRequestHeadersStatusStopAllIterationAndBuffer
+		return envoy.RequestHeadersStatusStopAllIterationAndBuffer
 	}
 	fmt.Println("EventHttpRequestHeaders called with id", h.id)
-	return envoy.EventHttpRequestHeadersStatusContinue
+	return envoy.HeadersStatusContinue
 }
 
-// EventHttpRequestBody implements envoy.HttpFilterInstance.
-func (h *delayHttpFilterInstance) EventHttpRequestBody(_ envoy.RequestBodyBuffer, _ bool) envoy.EventHttpRequestBodyStatus {
+// RequestBody implements envoy.HttpFilterInstance.
+func (h *delayHttpFilterInstance) RequestBody(_ envoy.RequestBodyBuffer, _ bool) envoy.RequestBodyStatus {
 	if h.id == 2 {
 		go func() {
 			fmt.Println("blocking for 1 second at EventHttpRequestBody with id", h.id)
@@ -64,14 +64,14 @@ func (h *delayHttpFilterInstance) EventHttpRequestBody(_ envoy.RequestBodyBuffer
 			}
 		}()
 		fmt.Println("EventHttpRequestBody returning StopIterationAndBuffer with id", h.id)
-		return envoy.EventHttpRequestBodyStatusStopIterationAndBuffer
+		return envoy.RequestBodyStatusStopIterationAndBuffer
 	}
 	fmt.Println("EventHttpRequestBody called with id", h.id)
-	return envoy.EventHttpRequestBodyStatusContinue
+	return envoy.RequestBodyStatusContinue
 }
 
-// EventHttpResponseHeaders implements envoy.HttpFilterInstance.
-func (h *delayHttpFilterInstance) EventHttpResponseHeaders(_ envoy.ResponseHeaders, _ bool) envoy.EventHttpResponseHeadersStatus {
+// ResponseHeaders implements envoy.HttpFilterInstance.
+func (h *delayHttpFilterInstance) ResponseHeaders(_ envoy.ResponseHeaders, _ bool) envoy.ResponseHeadersStatus {
 	if h.id == 3 {
 		go func() {
 			fmt.Println("blocking for 1 second at EventHttpResponseHeaders with id", h.id)
@@ -82,14 +82,14 @@ func (h *delayHttpFilterInstance) EventHttpResponseHeaders(_ envoy.ResponseHeade
 			}
 		}()
 		fmt.Println("EventHttpResponseHeaders returning StopAllIterationAndBuffer with id", h.id)
-		return envoy.EventHttpResponseHeadersStatusStopAllIterationAndBuffer
+		return envoy.ResponseHeadersStatusStopAllIterationAndBuffer
 	}
 	fmt.Println("EventHttpResponseHeaders called with id", h.id)
-	return envoy.EventHttpResponseHeadersStatusContinue
+	return envoy.ResponseHeadersStatusContinue
 }
 
-// EventHttpResponseBody implements envoy.HttpFilterInstance.
-func (h *delayHttpFilterInstance) EventHttpResponseBody(_ envoy.ResponseBodyBuffer, _ bool) envoy.EventHttpResponseBodyStatus {
+// ResponseBody implements envoy.HttpFilterInstance.
+func (h *delayHttpFilterInstance) ResponseBody(_ envoy.ResponseBodyBuffer, _ bool) envoy.ResponseBodyStatus {
 	if h.id == 4 {
 		go func() {
 			fmt.Println("blocking for 1 second at EventHttpResponseBody with id", h.id)
@@ -100,14 +100,14 @@ func (h *delayHttpFilterInstance) EventHttpResponseBody(_ envoy.ResponseBodyBuff
 			}
 		}()
 		fmt.Println("EventHttpResponseBody returning StopIterationAndBuffer with id", h.id)
-		return envoy.EventHttpResponseBodyStatusStopIterationAndBuffer
+		return envoy.ResponseBodyStatusStopIterationAndBuffer
 	}
 	fmt.Println("EventHttpResponseBody called with id", h.id)
-	return envoy.EventHttpResponseBodyStatusContinue
+	return envoy.ResponseBodyStatusContinue
 }
 
-// EventHttpDestroy implements envoy.HttpFilterInstance.
-func (h *delayHttpFilterInstance) EventHttpDestroy() {
+// Destroy implements envoy.HttpFilterInstance.
+func (h *delayHttpFilterInstance) Destroy() {
 	// After the request is done, we can clean up the filter instance.
 	h.envoyFilter = nil
 }

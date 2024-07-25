@@ -13,8 +13,8 @@ type bodiesReplaceHttpFilter struct{}
 
 func newbodiesReplaceHttpFilter(string) envoy.HttpFilter { return &bodiesReplaceHttpFilter{} }
 
-// NewHttpFilterInstance implements envoy.HttpFilter.
-func (f *bodiesReplaceHttpFilter) NewHttpFilterInstance(envoyFilter envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
+// NewInstance implements envoy.HttpFilter.
+func (f *bodiesReplaceHttpFilter) NewInstance(envoyFilter envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
 	return &bodiesReplaceHttpFilterInstance{envoyFilter: envoyFilter}
 }
 
@@ -28,8 +28,8 @@ type bodiesReplaceHttpFilterInstance struct {
 	responseAppend, responsePrepend, responseReplace string
 }
 
-// EventHttpRequestHeaders implements envoy.HttpFilterInstance.
-func (h *bodiesReplaceHttpFilterInstance) EventHttpRequestHeaders(headers envoy.RequestHeaders, _ bool) envoy.EventHttpRequestHeadersStatus {
+// RequestHeaders implements envoy.HttpFilterInstance.
+func (h *bodiesReplaceHttpFilterInstance) RequestHeaders(headers envoy.RequestHeaders, _ bool) envoy.RequestHeadersStatus {
 	append, ok := headers.Get("append")
 	if ok {
 		h.requestAppend = append.String()
@@ -43,14 +43,14 @@ func (h *bodiesReplaceHttpFilterInstance) EventHttpRequestHeaders(headers envoy.
 		h.requestReplace = replace.String()
 	}
 	headers.Remove("content-length") // Remove the content-length header to reset the length.
-	return envoy.EventHttpRequestHeadersStatusContinue
+	return envoy.HeadersStatusContinue
 }
 
-// EventHttpRequestBody implements envoy.HttpFilterInstance.
-func (h *bodiesReplaceHttpFilterInstance) EventHttpRequestBody(body envoy.RequestBodyBuffer, endOfStream bool) envoy.EventHttpRequestBodyStatus {
+// RequestBody implements envoy.HttpFilterInstance.
+func (h *bodiesReplaceHttpFilterInstance) RequestBody(body envoy.RequestBodyBuffer, endOfStream bool) envoy.RequestBodyStatus {
 	if !endOfStream {
 		// Wait for the end of the stream to see the full body.
-		return envoy.EventHttpRequestBodyStatusStopIterationAndBuffer
+		return envoy.RequestBodyStatusStopIterationAndBuffer
 	}
 
 	entireBody := h.envoyFilter.GetRequestBodyBuffer()
@@ -63,11 +63,11 @@ func (h *bodiesReplaceHttpFilterInstance) EventHttpRequestBody(body envoy.Reques
 	if h.requestReplace != "" {
 		entireBody.Replace([]byte(h.requestReplace))
 	}
-	return envoy.EventHttpRequestBodyStatusContinue
+	return envoy.RequestBodyStatusContinue
 }
 
-// EventHttpResponseHeaders implements envoy.HttpFilterInstance.
-func (h *bodiesReplaceHttpFilterInstance) EventHttpResponseHeaders(headers envoy.ResponseHeaders, _ bool) envoy.EventHttpResponseHeadersStatus {
+// ResponseHeaders implements envoy.HttpFilterInstance.
+func (h *bodiesReplaceHttpFilterInstance) ResponseHeaders(headers envoy.ResponseHeaders, _ bool) envoy.ResponseHeadersStatus {
 	append, ok := headers.Get("append")
 	if ok {
 		h.responseAppend = append.String()
@@ -81,15 +81,15 @@ func (h *bodiesReplaceHttpFilterInstance) EventHttpResponseHeaders(headers envoy
 		h.responseReplace = replace.String()
 	}
 	headers.Remove("content-length") // Remove the content-length header to reset the length.
-	return envoy.EventHttpResponseHeadersStatusContinue
+	return envoy.ResponseHeadersStatusContinue
 }
 
-// EventHttpResponseBody implements envoy.HttpFilterInstance.
-func (h *bodiesReplaceHttpFilterInstance) EventHttpResponseBody(body envoy.ResponseBodyBuffer, endOfStream bool) envoy.EventHttpResponseBodyStatus {
+// ResponseBody implements envoy.HttpFilterInstance.
+func (h *bodiesReplaceHttpFilterInstance) ResponseBody(body envoy.ResponseBodyBuffer, endOfStream bool) envoy.ResponseBodyStatus {
 	fmt.Printf("new request body frame: %s\n", string(body.Copy()))
 	if !endOfStream {
 		// Wait for the end of the stream to see the full body.
-		return envoy.EventHttpResponseBodyStatusStopIterationAndBuffer
+		return envoy.ResponseBodyStatusStopIterationAndBuffer
 	}
 
 	entireBody := h.envoyFilter.GetResponseBodyBuffer()
@@ -102,8 +102,8 @@ func (h *bodiesReplaceHttpFilterInstance) EventHttpResponseBody(body envoy.Respo
 	if h.responseReplace != "" {
 		entireBody.Replace([]byte(h.responseReplace))
 	}
-	return envoy.EventHttpResponseBodyStatusContinue
+	return envoy.ResponseBodyStatusContinue
 }
 
-// EventHttpDestroy implements envoy.HttpFilterInstance.
-func (h *bodiesReplaceHttpFilterInstance) EventHttpDestroy() {}
+// Destroy implements envoy.HttpFilterInstance.
+func (h *bodiesReplaceHttpFilterInstance) Destroy() {}

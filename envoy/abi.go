@@ -46,7 +46,7 @@ func __envoy_dynamic_module_v1_event_http_filter_instance_init(
 ) C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr {
 	envoyPtr := &envoyFilterInstance{raw: envoyFilterPtr}
 	httpFilter := memManager.unwrapPinnedHttpFilter(uintptr(httpFilterPtr))
-	httpInstance := httpFilter.filter.NewHttpFilterInstance(envoyPtr)
+	httpInstance := httpFilter.filter.NewInstance(envoyPtr)
 	pined := memManager.pinHttpFilterInstance(httpInstance)
 	return C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr(uintptr((unsafe.Pointer(pined))))
 }
@@ -60,7 +60,7 @@ func __envoy_dynamic_module_v1_event_http_filter_instance_request_headers(
 	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpFilterInstancePtr))
 	mapPtr := RequestHeaders{raw: requestHeadersPtr}
 	end := endOfStream != 0
-	result := httpInstance.filterInstance.EventHttpRequestHeaders(mapPtr, end)
+	result := httpInstance.filterInstance.RequestHeaders(mapPtr, end)
 	return C.__envoy_dynamic_module_v1_type_EventHttpRequestHeadersStatus(result)
 }
 
@@ -72,7 +72,7 @@ func __envoy_dynamic_module_v1_event_http_filter_instance_request_body(
 	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpFilterInstancePtr))
 	buf := RequestBodyBuffer{raw: buffer}
 	end := endOfStream != 0
-	result := httpInstance.filterInstance.EventHttpRequestBody(buf, end)
+	result := httpInstance.filterInstance.RequestBody(buf, end)
 	return C.__envoy_dynamic_module_v1_type_EventHttpRequestBodyStatus(result)
 }
 
@@ -84,7 +84,7 @@ func __envoy_dynamic_module_v1_event_http_filter_instance_response_headers(
 	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpFilterInstancePtr))
 	mapPtr := ResponseHeaders{raw: responseHeadersMapPtr}
 	end := endOfStream != 0
-	result := httpInstance.filterInstance.EventHttpResponseHeaders(mapPtr, end)
+	result := httpInstance.filterInstance.ResponseHeaders(mapPtr, end)
 	return C.__envoy_dynamic_module_v1_type_EventHttpResponseHeadersStatus(result)
 }
 
@@ -96,7 +96,7 @@ func __envoy_dynamic_module_v1_event_http_filter_instance_response_body(
 	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpFilterInstancePtr))
 	buf := ResponseBodyBuffer{raw: buffer}
 	end := endOfStream != 0
-	result := httpInstance.filterInstance.EventHttpResponseBody(buf, end)
+	result := httpInstance.filterInstance.ResponseBody(buf, end)
 	return C.__envoy_dynamic_module_v1_type_EventHttpResponseBodyStatus(result)
 }
 
@@ -104,7 +104,7 @@ func __envoy_dynamic_module_v1_event_http_filter_instance_response_body(
 func __envoy_dynamic_module_v1_event_http_filter_instance_destroy(
 	httpFilterInstancePtr C.__envoy_dynamic_module_v1_type_HttpFilterInstancePtr) {
 	httpInstance := unwrapRawPinHttpFilterInstance(uintptr(httpFilterInstancePtr))
-	httpInstance.filterInstance.EventHttpDestroy()
+	httpInstance.filterInstance.Destroy()
 	memManager.unpinHttpFilterInstance((*pinedHttpFilterInstance)(unsafe.Pointer(uintptr(httpFilterInstancePtr))))
 }
 

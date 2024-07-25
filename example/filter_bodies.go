@@ -14,8 +14,8 @@ type bodiesHttpFilter struct{}
 
 func newbodiesHttpFilter(string) envoy.HttpFilter { return &bodiesHttpFilter{} }
 
-// NewHttpFilterInstance implements envoy.HttpFilter.
-func (f *bodiesHttpFilter) NewHttpFilterInstance(envoyFilter envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
+// NewInstance implements envoy.HttpFilter.
+func (f *bodiesHttpFilter) NewInstance(envoyFilter envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
 	return &bodiesHttpFilterInstance{envoyFilter: envoyFilter}
 }
 
@@ -27,17 +27,17 @@ type bodiesHttpFilterInstance struct {
 	envoyFilter envoy.EnvoyFilterInstance
 }
 
-// EventHttpRequestHeaders implements envoy.HttpFilterInstance.
-func (h *bodiesHttpFilterInstance) EventHttpRequestHeaders(envoy.RequestHeaders, bool) envoy.EventHttpRequestHeadersStatus {
-	return envoy.EventHttpRequestHeadersStatusContinue
+// RequestHeaders implements envoy.HttpFilterInstance.
+func (h *bodiesHttpFilterInstance) RequestHeaders(envoy.RequestHeaders, bool) envoy.RequestHeadersStatus {
+	return envoy.HeadersStatusContinue
 }
 
-// EventHttpRequestBody implements envoy.HttpFilterInstance.
-func (h *bodiesHttpFilterInstance) EventHttpRequestBody(body envoy.RequestBodyBuffer, endOfStream bool) envoy.EventHttpRequestBodyStatus {
+// RequestBody implements envoy.HttpFilterInstance.
+func (h *bodiesHttpFilterInstance) RequestBody(body envoy.RequestBodyBuffer, endOfStream bool) envoy.RequestBodyStatus {
 	fmt.Printf("new request body frame: %s\n", string(body.Copy()))
 	if !endOfStream {
 		// Wait for the end of the stream to see the full body.
-		return envoy.EventHttpRequestBodyStatusStopIterationAndBuffer
+		return envoy.RequestBodyStatusStopIterationAndBuffer
 	}
 
 	// Now we can read the entire body.
@@ -62,20 +62,20 @@ func (h *bodiesHttpFilterInstance) EventHttpRequestBody(body envoy.RequestBodyBu
 			view[i] = 'X'
 		}
 	})
-	return envoy.EventHttpRequestBodyStatusContinue
+	return envoy.RequestBodyStatusContinue
 }
 
-// EventHttpResponseHeaders implements envoy.HttpFilterInstance.
-func (h *bodiesHttpFilterInstance) EventHttpResponseHeaders(envoy.ResponseHeaders, bool) envoy.EventHttpResponseHeadersStatus {
-	return envoy.EventHttpResponseHeadersStatusContinue
+// ResponseHeaders implements envoy.HttpFilterInstance.
+func (h *bodiesHttpFilterInstance) ResponseHeaders(envoy.ResponseHeaders, bool) envoy.ResponseHeadersStatus {
+	return envoy.ResponseHeadersStatusContinue
 }
 
-// EventHttpResponseBody implements envoy.HttpFilterInstance.
-func (h *bodiesHttpFilterInstance) EventHttpResponseBody(body envoy.ResponseBodyBuffer, endOfStream bool) envoy.EventHttpResponseBodyStatus {
+// ResponseBody implements envoy.HttpFilterInstance.
+func (h *bodiesHttpFilterInstance) ResponseBody(body envoy.ResponseBodyBuffer, endOfStream bool) envoy.ResponseBodyStatus {
 	fmt.Printf("new request body frame: %s\n", string(body.Copy()))
 	if !endOfStream {
 		// Wait for the end of the stream to see the full body.
-		return envoy.EventHttpResponseBodyStatusStopIterationAndBuffer
+		return envoy.ResponseBodyStatusStopIterationAndBuffer
 	}
 
 	// Now we can read the entire body.
@@ -100,8 +100,8 @@ func (h *bodiesHttpFilterInstance) EventHttpResponseBody(body envoy.ResponseBody
 			view[i] = 'Y'
 		}
 	})
-	return envoy.EventHttpResponseBodyStatusContinue
+	return envoy.ResponseBodyStatusContinue
 }
 
-// EventHttpDestroy implements envoy.HttpFilterInstance.
-func (h *bodiesHttpFilterInstance) EventHttpDestroy() {}
+// Destroy implements envoy.HttpFilterInstance.
+func (h *bodiesHttpFilterInstance) Destroy() {}

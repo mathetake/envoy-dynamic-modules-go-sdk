@@ -11,13 +11,10 @@ import (
 // This is to demonstrate how to create a simple http filter.
 type helloWorldFilter struct{}
 
-func newHelloWorldHttpFilter(string) envoy.HttpFilter {
-	fmt.Println("newHelloWorldHttpFilter called")
-	return &helloWorldFilter{}
-}
+func newHelloWorldHttpFilter(string) envoy.HttpFilter { return &helloWorldFilter{} }
 
-// NewHttpFilterInstance implements envoy.HttpFilter.
-func (f *helloWorldFilter) NewHttpFilterInstance(envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
+// NewInstance implements envoy.HttpFilter.
+func (f *helloWorldFilter) NewInstance(envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
 	fmt.Println("helloWorldHttpFilter.NewHttpFilterInstance called")
 	return &helloWorldHttpFilterInstance{}
 }
@@ -28,31 +25,31 @@ func (f *helloWorldFilter) Destroy() { fmt.Println("helloWorldFilter.Destroy cal
 // helloWorldHttpFilterInstance implements envoy.HttpFilterInstance.
 type helloWorldHttpFilterInstance struct{}
 
-// EventHttpRequestHeaders implements envoy.HttpFilterInstance.
-func (h *helloWorldHttpFilterInstance) EventHttpRequestHeaders(envoy.RequestHeaders, bool) envoy.EventHttpRequestHeadersStatus {
+// RequestHeaders implements envoy.HttpFilterInstance.
+func (h *helloWorldHttpFilterInstance) RequestHeaders(envoy.RequestHeaders, bool) envoy.RequestHeadersStatus {
 	fmt.Println("helloWorldHttpFilterInstance.EventHttpRequestHeaders called")
-	return envoy.EventHttpRequestHeadersStatusContinue
+	return envoy.HeadersStatusContinue
 }
 
-// EventHttpRequestBody implements envoy.HttpFilterInstance.
-func (h *helloWorldHttpFilterInstance) EventHttpRequestBody(envoy.RequestBodyBuffer, bool) envoy.EventHttpRequestBodyStatus {
+// RequestBody implements envoy.HttpFilterInstance.
+func (h *helloWorldHttpFilterInstance) RequestBody(envoy.RequestBodyBuffer, bool) envoy.RequestBodyStatus {
 	fmt.Println("helloWorldHttpFilterInstance.EventHttpRequestBody called")
-	return envoy.EventHttpRequestBodyStatusContinue
+	return envoy.RequestBodyStatusContinue
 }
 
-// EventHttpResponseHeaders implements envoy.HttpFilterInstance.
-func (h *helloWorldHttpFilterInstance) EventHttpResponseHeaders(envoy.ResponseHeaders, bool) envoy.EventHttpResponseHeadersStatus {
+// ResponseHeaders implements envoy.HttpFilterInstance.
+func (h *helloWorldHttpFilterInstance) ResponseHeaders(envoy.ResponseHeaders, bool) envoy.ResponseHeadersStatus {
 	fmt.Println("helloWorldHttpFilterInstance.EventHttpResponseHeaders called")
-	return envoy.EventHttpResponseHeadersStatusContinue
+	return envoy.ResponseHeadersStatusContinue
 }
 
-// EventHttpResponseBody implements envoy.HttpFilterInstance.
-func (h *helloWorldHttpFilterInstance) EventHttpResponseBody(envoy.ResponseBodyBuffer, bool) envoy.EventHttpResponseBodyStatus {
+// ResponseBody implements envoy.HttpFilterInstance.
+func (h *helloWorldHttpFilterInstance) ResponseBody(envoy.ResponseBodyBuffer, bool) envoy.ResponseBodyStatus {
 	fmt.Println("helloWorldHttpFilterInstance.EventHttpResponseBody called")
-	return envoy.EventHttpResponseBodyStatusContinue
+	return envoy.ResponseBodyStatusContinue
 }
 
-// EventHttpDestroy implements envoy.HttpFilterInstance.
-func (h *helloWorldHttpFilterInstance) EventHttpDestroy() {
+// Destroy implements envoy.HttpFilterInstance.
+func (h *helloWorldHttpFilterInstance) Destroy() {
 	fmt.Println("helloWorldHttpFilterInstance.EventHttpDestroy called")
 }

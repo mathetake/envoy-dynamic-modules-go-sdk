@@ -14,8 +14,8 @@ type headersHttpFilter struct{}
 
 func newHeadersHttpFilter(string) envoy.HttpFilter { return &headersHttpFilter{} }
 
-// NewHttpFilterInstance implements envoy.HttpFilter.
-func (f *headersHttpFilter) NewHttpFilterInstance(envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
+// NewInstance implements envoy.HttpFilter.
+func (f *headersHttpFilter) NewInstance(envoy.EnvoyFilterInstance) envoy.HttpFilterInstance {
 	return &headersHttpFilterInstance{}
 }
 
@@ -25,8 +25,8 @@ func (f *headersHttpFilter) Destroy() {}
 // headersHttpFilterInstance implements envoy.HttpFilterInstance.
 type headersHttpFilterInstance struct{}
 
-// EventHttpRequestHeaders implements envoy.HttpFilterInstance.
-func (h *headersHttpFilterInstance) EventHttpRequestHeaders(headers envoy.RequestHeaders, _ bool) envoy.EventHttpRequestHeadersStatus {
+// RequestHeaders implements envoy.HttpFilterInstance.
+func (h *headersHttpFilterInstance) RequestHeaders(headers envoy.RequestHeaders, _ bool) envoy.RequestHeadersStatus {
 	fooValue, _ := headers.Get("foo")
 	if !fooValue.Equal("value") {
 		log.Fatalf("expected foo to be \"value\", got %s", fooValue.String())
@@ -36,16 +36,16 @@ func (h *headersHttpFilterInstance) EventHttpRequestHeaders(headers envoy.Reques
 	headers.Remove("multiple-values")
 	headers.Set("foo", "yes")
 	headers.Set("multiple-values-to-be-single", "single")
-	return envoy.EventHttpRequestHeadersStatusContinue
+	return envoy.HeadersStatusContinue
 }
 
-// EventHttpRequestBody implements envoy.HttpFilterInstance.
-func (h *headersHttpFilterInstance) EventHttpRequestBody(envoy.RequestBodyBuffer, bool) envoy.EventHttpRequestBodyStatus {
-	return envoy.EventHttpRequestBodyStatusContinue
+// RequestBody implements envoy.HttpFilterInstance.
+func (h *headersHttpFilterInstance) RequestBody(envoy.RequestBodyBuffer, bool) envoy.RequestBodyStatus {
+	return envoy.RequestBodyStatusContinue
 }
 
-// EventHttpResponseHeaders implements envoy.HttpFilterInstance.
-func (h *headersHttpFilterInstance) EventHttpResponseHeaders(headers envoy.ResponseHeaders, _ bool) envoy.EventHttpResponseHeadersStatus {
+// ResponseHeaders implements envoy.HttpFilterInstance.
+func (h *headersHttpFilterInstance) ResponseHeaders(headers envoy.ResponseHeaders, _ bool) envoy.ResponseHeadersStatus {
 	headers.Values("this-is", func(value envoy.HeaderValue) {
 		if !value.Equal("response-header") {
 			log.Fatalf("expected this-is to be \"response-header\", got %s", value.String())
@@ -57,13 +57,13 @@ func (h *headersHttpFilterInstance) EventHttpResponseHeaders(headers envoy.Respo
 	headers.Set("this-is", "response-header")
 	headers.Remove("this-is-2")
 	headers.Set("multiple-values-res-to-be-single", "single")
-	return envoy.EventHttpResponseHeadersStatusContinue
+	return envoy.ResponseHeadersStatusContinue
 }
 
-// EventHttpResponseBody implements envoy.HttpFilterInstance.
-func (h *headersHttpFilterInstance) EventHttpResponseBody(envoy.ResponseBodyBuffer, bool) envoy.EventHttpResponseBodyStatus {
-	return envoy.EventHttpResponseBodyStatusContinue
+// ResponseBody implements envoy.HttpFilterInstance.
+func (h *headersHttpFilterInstance) ResponseBody(envoy.ResponseBodyBuffer, bool) envoy.ResponseBodyStatus {
+	return envoy.ResponseBodyStatusContinue
 }
 
-// EventHttpDestroy implements envoy.HttpFilterInstance.
-func (h *headersHttpFilterInstance) EventHttpDestroy() {}
+// Destroy implements envoy.HttpFilterInstance.
+func (h *headersHttpFilterInstance) Destroy() {}
