@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/envoyproxyx/go-sdk/envoy"
+	"github.com/mathetake/envoy-dynamic-modules-go-sdk/envoy"
 )
 
 // bodiesHttpFilter implements envoy.HttpFilter.

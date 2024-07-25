@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/envoyproxyx/go-sdk/envoy"
+	"github.com/mathetake/envoy-dynamic-modules-go-sdk/envoy"
 )
 
 func main() {} // main function must be present but empty.

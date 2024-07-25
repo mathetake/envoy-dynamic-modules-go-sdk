@@ -1,6 +1,6 @@
 goimports := golang.org/x/tools/cmd/goimports@v0.21.0
 golangci_lint := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.0
-sdk_conformance_tests := github.com/envoyproxyx/sdk-conformance-tests@main
+sdk_conformance_tests := github.com/mathetake/envoy-dynamic-modules-sdk-conformance-tests@15827554844ada7dde1c4e644f341faf275be72e
 
 .PHONY: build
 build:
@@ -28,7 +28,7 @@ format:
 	    awk '/^import \($$/,/^\)$$/{if($$0=="")next}{print}' $$f > /tmp/fmt; \
 	    mv /tmp/fmt $$f; \
 	done
-	@go run $(goimports) -w -local github.com/envoyproxyx/go-sdk `find . -name '*.go'`
+	@go run $(goimports) -w -local github.com/mathetake/envoy-dynamic-modules-go-sdk `find . -name '*.go'`
 
 .PHONY: tidy
 tidy: ## Runs go mod tidy on every module
