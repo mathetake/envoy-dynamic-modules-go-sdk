@@ -136,6 +136,21 @@ func (c *envoyFilterInstance) GetResponseBodyBuffer() ResponseBodyBuffer {
 	return ResponseBodyBuffer{raw: C.__envoy_dynamic_module_v1_http_get_response_body_buffer(c.raw)}
 }
 
+// SendResponse implements EnvoyFilterInstance interface in abi_nocgo.go which is not included in the shared library.
+func (c *envoyFilterInstance) SendResponse(statusCode int, headers [][2]string, body []byte) {
+	headersPtr := unsafe.Pointer(&headers[0])
+	headersLen := len(headers)
+	bodyPtr := unsafe.Pointer(&body[0])
+	bodyLen := len(body)
+	C.__envoy_dynamic_module_v1_http_send_response(c.raw,
+		C.uint32_t(statusCode),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(uintptr(headersPtr)),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(headersLen),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferPtr(uintptr(bodyPtr)),
+		C.__envoy_dynamic_module_v1_type_InModuleBufferLength(bodyLen),
+	)
+}
+
 // RequestHeaders implements RequestHeaders interface in abi_nocgo.go which is not included in the shared library.
 type RequestHeaders struct {
 	raw C.__envoy_dynamic_module_v1_type_HttpRequestHeadersMapPtr

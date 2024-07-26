@@ -133,6 +133,24 @@ typedef size_t __envoy_dynamic_module_v1_type_DataSliceLength;
 // __envoy_dynamic_module_v1_type_DataSliceLength that is managed by the module.
 typedef size_t __envoy_dynamic_module_v1_type_DataSliceLengthResult;
 
+// __envoy_dynamic_module_v1_type_InModuleHeader is a struct that contains representation of a
+// header. This is used to pass headers to Envoy from modules.
+typedef struct {
+  __envoy_dynamic_module_v1_type_InModuleBufferPtr header_key;
+  __envoy_dynamic_module_v1_type_InModuleBufferLength header_key_length;
+  __envoy_dynamic_module_v1_type_InModuleBufferPtr header_value;
+  __envoy_dynamic_module_v1_type_InModuleBufferLength header_value_length;
+} __envoy_dynamic_module_v1_type_InModuleHeader;
+
+// __envoy_dynamic_module_v1_type_InModuleBufferVectorPtr is a pointer to a vector of
+// __envoy_dynamic_module_v1_type_InModuleHeader. This is currently only used for sending local
+// responses.
+typedef __envoy_dynamic_module_v1_raw_pointer __envoy_dynamic_module_v1_type_InModuleHeadersPtr;
+OWNED_BY_MODULE;
+
+// __envoy_dynamic_module_v1_type_InModuleHeadersSize is the size of the vector of buffers.
+typedef size_t __envoy_dynamic_module_v1_type_InModuleHeadersSize;
+
 // -----------------------------------------------------------------------------
 // ----------------------------------- Enums -----------------------------------
 // -----------------------------------------------------------------------------
@@ -279,7 +297,7 @@ void __envoy_dynamic_module_v1_event_http_filter_destroy(
 __envoy_dynamic_module_v1_type_HttpFilterInstancePtr
 __envoy_dynamic_module_v1_event_http_filter_instance_init(
     __envoy_dynamic_module_v1_type_EnvoyFilterInstancePtr envoy_filter_instance_ptr,
-    __envoy_dynamic_module_v1_type_HttpFilterPtr http_filter_instance_ptr);
+    __envoy_dynamic_module_v1_type_HttpFilterPtr http_filter_ptr);
 
 // __envoy_dynamic_module_v1_event_http_filter_instance_request_headers is called when request
 // headers are received.
@@ -545,6 +563,18 @@ void __envoy_dynamic_module_v1_http_continue_request(
 // the response. This function is used when the module returned non Continue status in the events.
 void __envoy_dynamic_module_v1_http_continue_response(
     __envoy_dynamic_module_v1_type_EnvoyFilterInstancePtr envoy_filter_instance_ptr);
+
+// ---------------- Miscellaneous API ----------------
+
+// __envoy_dynamic_module_v1_http_send_response is called by the module to send a response to the
+// client. headers_vector is a vector of headers to send. status_code is the status code to send.
+// body is the body to send. body_length is the length of the body.
+void __envoy_dynamic_module_v1_http_send_response(
+    __envoy_dynamic_module_v1_type_EnvoyFilterInstancePtr envoy_filter_instance_ptr,
+    uint32_t status_code, __envoy_dynamic_module_v1_type_InModuleHeadersPtr headers_vector,
+    __envoy_dynamic_module_v1_type_InModuleHeadersSize headers_vector_size,
+    __envoy_dynamic_module_v1_type_InModuleBufferPtr body,
+    __envoy_dynamic_module_v1_type_InModuleBufferLength body_length);
 
 #ifdef __cplusplus
 }

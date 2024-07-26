@@ -17,6 +17,8 @@ type EnvoyFilterInstance interface {
 	ContinueRequest()
 	// ContinueResponse is a function that continues the response processing.
 	ContinueResponse()
+	// SendResponse is a function that sends the response to the downstream.
+	SendResponse(statusCode int, headers [][2]string, body []byte)
 }
 
 // RequestHeaders is an opaque object that represents the underlying Envoy Http request headers map.
